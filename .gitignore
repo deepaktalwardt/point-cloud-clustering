@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+# ROS build outputs
+ros_ws/build/
+ros_ws/devel/
+
+# VS Code
+.vscode/
+
+# Remove DS_Store
+*.DS_Store
+
+# Ignore .catkin_workspace
+ros_ws/.catkin_workspace
