@@ -1,0 +1,51 @@
+[
+    {
+        "type": "Lidar",
+        "name": "Lidar",
+        "params": {
+            "LaserCount": 64,
+            "MinDistance": 0.5,
+            "MaxDistance": 50,
+            "RotationFrequency": 10,
+            "MeasurementsPerRotation": 360,
+            "FieldOfView": 41.33,
+            "CenterAngle": 10,
+            "Compensated": true,
+            "PointColor": "#ff000000",
+            "Topic": "/simulator/lidar",
+            "Frame": "velodyne"
+        },
+        "transform": {
+            "x": 0,
+            "y": 2.312,
+            "z": -0.3679201,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0
+        }
+    },
+    {
+        "type": "3D Ground Truth",
+        "name": "3D Ground Truth",
+        "params": {
+            "Frequency": 10,
+            "Topic": "/simulator/ground_truth/3d_detections"
+        },
+        "transform": {
+            "x": 0,
+            "y": 1.975314,
+            "z": -0.3679201,
+            "pitch": 0,
+            "yaw": 0,
+            "roll": 0
+        }
+    },
+    {
+        "type": "Keyboard Control",
+        "name": "Keyboard Car Control"
+    },
+    {
+        "type": "Wheel Control",
+        "name": "Wheel Car Control"
+    }
+]
