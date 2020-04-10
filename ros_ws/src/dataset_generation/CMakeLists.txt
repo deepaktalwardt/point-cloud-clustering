@@ -20,6 +20,8 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen)
 
+find_package(PCL 1.7 REQUIRED COMPONENTS common io)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -119,6 +121,7 @@ catkin_package(
  DEPENDS 
   Boost
   Eigen
+  PCL
 )
 
 ###########
