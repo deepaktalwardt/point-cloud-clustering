@@ -45,6 +45,8 @@ private:
 
     int common_fn_ = 0;
     int not_common_fn_ = 0;
+
+    std::unordered_map<std::string, int> labels_count_map_;
 };
 
 void get_files_in_directory(
@@ -130,6 +132,13 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds()
 
         bool exported = extract_objects_from_pcd(in_cloud_blob, dets3d_json, pcd_fn);
     }
+
+    // Print out how many objects were found
+    std::cout << "Number of objects found: " << std::endl;
+    for (auto it = labels_count_map_.begin(); it != labels_count_map_.end(); it++)
+    {
+        std::cout << it->first << ": " << it->second << std::endl;
+    }
 }
 
 bool ExtractPointCloudObjects::extract_objects_from_pcd(
@@ -206,8 +215,13 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
         
         pcl::io::savePCDFileASCII(out_pcd_path.str(), out_cloud);
 
+        std::cout << "Extracted: " << out_pcd_name.str() << std::endl;
+
         // Update index for the next object
         curr_det_idx++;
+
+        // Add to labels_map
+        labels_count_map_[label]++;
     }
 }
 
