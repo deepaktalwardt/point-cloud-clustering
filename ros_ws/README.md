@@ -22,6 +22,7 @@ rosbag play bag1.bag
 ```
 #### Optional Parameters
 `-r <rate>`: Speed at which the bag is played.
+
 `-l`: Loop the bag
 
 For more information see the documentation: http://wiki.ros.org/rosbag/Commandline
