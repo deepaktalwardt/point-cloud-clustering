@@ -36,3 +36,13 @@ rviz rviz
 2. Under the "PointCloud2" section, select Topic: "/simulator/lidar"
 3. Under "Global Options" set "Fixed Frame" to "velodyne"
 4. This should start showing the point clouds on the display. You might want to tweak the "Size(m)" parameter under the "PointCloud2" section to make them more visible. 
+
+## Extracting Objects from PointClouds
+This functionality is provided in the `dataset_generation` package in the `extract_point_cloud_objects.h` file. To build the catkin workspace by running `catkin_make` as shown above. Then, source the workspace by `source devel/setup.bash`. 
+
+The library can be tested by running the `extract_point_cloud_objects_node.cpp` using the following command
+```
+rosrun dataset_generation extract_point_cloud_objects_node
+```
+
+This will output the extract PCD files in the `dataset_generation/test/out_pcd` folder. You can view them using the `pcl_viewer` tool.
