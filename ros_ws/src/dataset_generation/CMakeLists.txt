@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dataset_generation)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+# Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -13,6 +13,15 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
 )
 
+find_package(Boost REQUIRED COMPONENTS
+  system
+  thread
+)
+
+find_package(Eigen)
+
+find_package(PCL 1.7 REQUIRED COMPONENTS common io)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -20,7 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -103,10 +112,16 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES dataset_generation
-#  CATKIN_DEPENDS pcl_ros roscpp rospy
-#  DEPENDS system_lib
+ INCLUDE_DIRS include
+ LIBRARIES dataset_generation
+ CATKIN_DEPENDS 
+  pcl_ros
+  roscpp
+  rospy
+ DEPENDS 
+  Boost
+  Eigen
+  PCL
 )
 
 ###########
@@ -116,8 +131,29 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
+)
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+add_executable(extract_point_cloud_objects_node 
+  src/extract_point_cloud_objects_node.cpp
+)
+
+add_dependencies(extract_point_cloud_objects_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(extract_point_cloud_objects_node
+  ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Eigen_LIBRARIES}
 )
 
 ## Declare a C++ library
