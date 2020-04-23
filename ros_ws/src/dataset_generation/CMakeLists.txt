@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 2.8.3)
 project(dataset_generation)
 
 # Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++14)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -20,7 +24,7 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen)
 
-find_package(PCL 1.7 REQUIRED COMPONENTS common io)
+find_package(PCL 1.7 REQUIRED COMPONENTS common io visualization)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

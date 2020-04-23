@@ -2,18 +2,23 @@
 
 #include <dirent.h>
 #include <iostream>
+#include <thread>
 #include <string>
 #include <sstream>
 #include <unordered_set>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/common/common_headers.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/impl/crop_box.hpp>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
 #include "dataset_generation/json.hpp"
+
+using namespace std::literals::chrono_literals;
 
 namespace dataset_generation
 {
@@ -35,6 +40,13 @@ public:
         pcl::PCLPointCloud2 in_cloud_blob,
         const json& dets3d_json,
         const std::string& pcd_fn);
+    
+    void visualize_objects_in_pcd(
+        pcl::PCLPointCloud2 in_cloud_blob,
+        const json& dets3d_json);
+    
+    void visualize_cloud_only(
+        pcl::PCLPointCloud2 in_cloud_blob);
 
 private:
     std::string in_folder_pcd_;
@@ -124,7 +136,7 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds()
         dets3d_file_path = in_folder_dets3d_ + "/" + dets3d_fn;
 
         pcl::PCLPointCloud2 in_cloud_blob;
-        pcl::io::loadPCDFile (pcd_file_path, in_cloud_blob);
+        pcl::io::loadPCDFile(pcd_file_path, in_cloud_blob);
         
         std::ifstream dets3d_file(dets3d_file_path);
         json dets3d_json;
@@ -222,6 +234,94 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
 
         // Add to labels_map
         labels_count_map_[label]++;
+    }
+}
+
+void ExtractPointCloudObjects::visualize_objects_in_pcd(
+    pcl::PCLPointCloud2 in_cloud_blob,
+    const json& dets3d_json)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromPCLPointCloud2(in_cloud_blob, *in_cloud);
+
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+    viewer->addPointCloud<pcl::PointXYZ>(in_cloud, "sample cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters(); 
+
+    // Iterate over detections in dets3d_json
+    int num_dets3d = dets3d_json["detections"].size();
+    json dets3d = dets3d_json["detections"];
+
+    for (int i = 0; i < num_dets3d; i++)
+    {
+        // Get the bounding box
+        json bbox = dets3d[i]["bbox"];
+
+        // Create CropBox for the box
+        pcl::CropBox<pcl::PointXYZ> crop_box;
+        crop_box.setInputCloud(in_cloud);
+
+        // Set paramaters
+        json bbox_pos = bbox["position"]["position"];
+        json bbox_ori = bbox["position"]["orientation"];
+        json bbox_size = bbox["size"];
+
+        Eigen::Vector3f translation(
+            bbox_pos["x"],
+            bbox_pos["y"],
+            bbox_pos["z"]);
+
+        Eigen::Quaternionf quarternion(
+            bbox_ori["w"],
+            bbox_ori["x"],
+            bbox_ori["y"],
+            bbox_ori["z"]);
+        
+        double depth = static_cast<double>(bbox_size["z"]);
+        double width = static_cast<double>(bbox_size["x"]);
+        double height = static_cast<double>(bbox_size["y"]);
+        
+        // double depth = static_cast<double>(bbox_size["x"]);
+        // double width = static_cast<double>(bbox_size["y"]);
+        // double height = static_cast<double>(bbox_size["z"]);
+        
+        viewer->addCube(
+            translation,
+            quarternion,
+            width,
+            height,
+            depth);
+    }
+
+    viewer->setRepresentationToWireframeForAllActors();
+
+    while (!viewer->wasStopped())
+    {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(100ms);
+    }
+}
+
+void ExtractPointCloudObjects::visualize_cloud_only(
+    pcl::PCLPointCloud2 in_cloud_blob)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromPCLPointCloud2(in_cloud_blob, *in_cloud);
+
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+    viewer->addPointCloud<pcl::PointXYZ>(in_cloud, "sample cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters();
+
+    while (!viewer->wasStopped ())
+    {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(100ms);
     }
 }
 
