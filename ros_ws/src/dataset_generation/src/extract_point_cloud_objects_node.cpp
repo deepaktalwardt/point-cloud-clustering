@@ -39,11 +39,13 @@ int main(int argc, char** argv)
     
     // epco.extract_objects_from_all_pcds();
 
+    std::string pcd_name = "1586102719360786";
+
     std::string in_pcd_path =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/point-cloud-clustering/ros_ws/src/dataset_generation/test/pcd/1586102741930765.pcd";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/point-cloud-clustering/ros_ws/src/dataset_generation/test/pcd/" + pcd_name + ".pcd";
     
     std::string in_json_path =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/point-cloud-clustering/ros_ws/src/dataset_generation/test/dets3d/1586102741930765.json";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/point-cloud-clustering/ros_ws/src/dataset_generation/test/dets3d/" + pcd_name + ".json";
 
     visualize_pcd_and_objects(epco, in_pcd_path, in_json_path);
 

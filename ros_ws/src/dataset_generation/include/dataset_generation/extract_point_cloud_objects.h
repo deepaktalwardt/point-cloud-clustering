@@ -246,7 +246,18 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
-    viewer->addPointCloud<pcl::PointXYZ>(in_cloud, "sample cloud");
+    pcl::visualization::PCLVisualizer::GeometryHandlerPtr geometry_handler;
+    // viewer->addPointCloud<pcl::PointXYZ>(
+    //     &in_cloud_blob,
+    //     geometry_handler,
+    //     Eigen::Vector4f(0, 0, 0, 0),
+    //     Eigen::Quaternionf(1, 0, 0, 0),
+    //     "sample cloud");
+
+    viewer->addPointCloud<pcl::PointXYZ>(
+        in_cloud,
+        "sample cloud");
+
     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters(); 
@@ -260,19 +271,15 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
         // Get the bounding box
         json bbox = dets3d[i]["bbox"];
 
-        // Create CropBox for the box
-        pcl::CropBox<pcl::PointXYZ> crop_box;
-        crop_box.setInputCloud(in_cloud);
-
         // Set paramaters
         json bbox_pos = bbox["position"]["position"];
         json bbox_ori = bbox["position"]["orientation"];
         json bbox_size = bbox["size"];
 
         Eigen::Vector3f translation(
-            bbox_pos["x"],
+            static_cast<float>(bbox_pos["x"]) - 0.5,
             bbox_pos["y"],
-            bbox_pos["z"]);
+            static_cast<float>(bbox_pos["z"]) / 2.0);
 
         Eigen::Quaternionf quarternion(
             bbox_ori["w"],
@@ -283,6 +290,9 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
         double depth = static_cast<double>(bbox_size["z"]);
         double width = static_cast<double>(bbox_size["x"]);
         double height = static_cast<double>(bbox_size["y"]);
+
+        // Get Label
+        std::string label = dets3d[i]["label"];
         
         // double depth = static_cast<double>(bbox_size["x"]);
         // double width = static_cast<double>(bbox_size["y"]);
@@ -293,7 +303,8 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
             quarternion,
             width,
             height,
-            depth);
+            depth,
+            label + "_" + std::to_string(i));
     }
 
     viewer->setRepresentationToWireframeForAllActors();
