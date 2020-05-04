@@ -39,7 +39,8 @@ int main(int argc, char** argv)
     
     // epco.extract_objects_from_all_pcds();
 
-    std::string pcd_name = "1586102719360786";
+    // std::string pcd_name = "1586102719360786";
+    std::string pcd_name = "1588356906526329";
 
     std::string in_pcd_path =
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/point-cloud-clustering/ros_ws/src/dataset_generation/test/pcd/" + pcd_name + ".pcd";

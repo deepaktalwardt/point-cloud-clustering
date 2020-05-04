@@ -246,7 +246,7 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
-    pcl::visualization::PCLVisualizer::GeometryHandlerPtr geometry_handler;
+    // pcl::visualization::PCLVisualizer::GeometryHandlerPtr geometry_handler;
     // viewer->addPointCloud<pcl::PointXYZ>(
     //     &in_cloud_blob,
     //     geometry_handler,
@@ -277,9 +277,10 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
         json bbox_size = bbox["size"];
 
         Eigen::Vector3f translation(
-            static_cast<float>(bbox_pos["x"]) - 0.5,
-            bbox_pos["y"],
-            static_cast<float>(bbox_pos["z"]) / 2.0);
+            static_cast<float>(bbox_pos["x"]),
+            static_cast<float>(bbox_pos["y"]),
+            // static_cast<float>(bbox_pos["z"]) / 2.0);
+            static_cast<float>(bbox_pos["z"]));
 
         Eigen::Quaternionf quarternion(
             bbox_ori["w"],
@@ -287,9 +288,9 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
             bbox_ori["y"],
             bbox_ori["z"]);
         
-        double depth = static_cast<double>(bbox_size["z"]);
-        double width = static_cast<double>(bbox_size["x"]);
-        double height = static_cast<double>(bbox_size["y"]);
+        double depth = static_cast<float>(bbox_size["z"]);
+        double width = static_cast<float>(bbox_size["x"]);
+        double height = static_cast<float>(bbox_size["y"]);
 
         // Get Label
         std::string label = dets3d[i]["label"];
