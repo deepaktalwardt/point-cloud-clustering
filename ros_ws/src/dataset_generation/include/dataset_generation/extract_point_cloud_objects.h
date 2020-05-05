@@ -34,12 +34,14 @@ public:
         std::string in_folder_dets3d,
         std::string out_folder_pcd);
     
-    void extract_objects_from_all_pcds();
+    void extract_objects_from_all_pcds(
+        int min_nb_points_threshold = 50);
     
     bool extract_objects_from_pcd(
         pcl::PCLPointCloud2 in_cloud_blob,
         const json& dets3d_json,
-        const std::string& pcd_fn);
+        const std::string& pcd_fn,
+        int min_nb_points_threshold);
     
     void visualize_objects_in_pcd(
         pcl::PCLPointCloud2 in_cloud_blob,
@@ -55,10 +57,11 @@ private:
 
     std::unordered_set<std::string> pcd_names_set_, dets3d_names_set_;
 
-    int common_fn_ = 0;
     int not_common_fn_ = 0;
 
     std::unordered_map<std::string, int> labels_count_map_;
+
+    std::vector<std::pair<std::string, std::string>> common_fn_vec_;
 };
 
 void get_files_in_directory(
@@ -102,7 +105,11 @@ ExtractPointCloudObjects::ExtractPointCloudObjects(
     get_files_in_directory(in_folder_pcd_, pcd_names_set_);
     get_files_in_directory(in_folder_dets3d_, dets3d_names_set_);
 
+    std::cout << "Number of PCD files: " << pcd_names_set_.size() << std::endl; 
+    std::cout << "Number of JSON files: " << dets3d_names_set_.size() << std::endl;
+
     // Ensure that all PCD files have their respective JSON files
+    int i = 0;
     for (auto it = pcd_names_set_.begin(); it != pcd_names_set_.end(); it++)
     {
         std::string pcd_fn = *it;
@@ -112,24 +119,27 @@ ExtractPointCloudObjects::ExtractPointCloudObjects(
         if (dets3d_names_set_.find(dets3d_fn) == dets3d_names_set_.end())
         {
             std::cout << "Detections for " << pcd_fn << " not found!" << std::endl;
-            pcd_names_set_.erase(pcd_fn);
+            // pcd_names_set_.erase(pcd_fn);
             not_common_fn_++;
         }
         else
         {
-            common_fn_++;
+            common_fn_vec_.push_back({pcd_fn, dets3d_fn});
         }
+        i++;
     }
-    std::cout << "Number of common files: " << common_fn_ << std::endl;
+    std::cout << "Iterations (i): " << i << ", Skipped: " << not_common_fn_ << std::endl;
+    std::cout << "Number of common files: " << common_fn_vec_.size() << std::endl;
 }
 
-void ExtractPointCloudObjects::extract_objects_from_all_pcds()
+void ExtractPointCloudObjects::extract_objects_from_all_pcds(
+    int min_nb_points_threshold)
 {
     // Iterate over all PCD files, find their corresponding detections
-    for (auto it = pcd_names_set_.begin(); it != pcd_names_set_.end(); it++)
+    for (const auto& pair_fn : common_fn_vec_)
     {
-        std::string pcd_fn = *it;
-        std::string dets3d_fn = pcd_fn.substr(0, pcd_fn.size() - 3) + "json";
+        std::string pcd_fn = pair_fn.first;
+        std::string dets3d_fn = pair_fn.second;
 
         std::string pcd_file_path, dets3d_file_path;
         pcd_file_path = in_folder_pcd_ + "/" + pcd_fn;
@@ -142,7 +152,11 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds()
         json dets3d_json;
         dets3d_file >> dets3d_json;
 
-        bool exported = extract_objects_from_pcd(in_cloud_blob, dets3d_json, pcd_fn);
+        bool exported = extract_objects_from_pcd(
+            in_cloud_blob,
+            dets3d_json,
+            pcd_fn,
+            min_nb_points_threshold);
     }
 
     // Print out how many objects were found
@@ -156,7 +170,8 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds()
 bool ExtractPointCloudObjects::extract_objects_from_pcd(
     pcl::PCLPointCloud2 in_cloud_blob,
     const json& dets3d_json, 
-    const std::string& pcd_fn)
+    const std::string& pcd_fn,
+    int min_nb_points_threshold)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromPCLPointCloud2(in_cloud_blob, *in_cloud);
@@ -182,9 +197,9 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
         json bbox_size = bbox["size"];
 
         Eigen::Vector3f translation(
-            bbox_pos["x"],
-            bbox_pos["y"],
-            bbox_pos["z"]);
+            static_cast<float>(bbox_pos["x"]),
+            static_cast<float>(bbox_pos["y"]),
+            static_cast<float>(bbox_pos["z"]));
 
         Eigen::Quaternionf quarternion(
             bbox_ori["w"],
@@ -198,16 +213,28 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
         crop_box.setRotation(euler_angles);
 
         Eigen::Vector4f min_point(
-            -static_cast<float>(bbox_size["x"]) / 2.0,
-            -static_cast<float>(bbox_size["y"]) / 2.0,
+            (-static_cast<float>(bbox_size["x"]) / 2.0) - 0.5,
+            (-static_cast<float>(bbox_size["y"]) / 2.0) - 0.5,
             0.0,
             0.0);
 
         Eigen::Vector4f max_point(
-            static_cast<float>(bbox_size["x"]) / 2.0,
-            static_cast<float>(bbox_size["y"]) / 2.0,
-            static_cast<float>(bbox_size["z"]),
+            (static_cast<float>(bbox_size["x"]) / 2.0) + 0.5,
+            (static_cast<float>(bbox_size["y"]) / 2.0) + 0.5,
+            static_cast<float>(bbox_size["z"]) + 1.0,
             0.0);
+
+        // Eigen::Vector4f min_point(
+        //     (-static_cast<float>(bbox_size["x"]) / 2.0) - 0.5,
+        //     (-static_cast<float>(bbox_size["y"]) / 2.0) - 0.5,
+        //     (-static_cast<float>(bbox_size["z"]) / 2.0) - 0.5,
+        //     0.0);
+
+        // Eigen::Vector4f max_point(
+        //     (static_cast<float>(bbox_size["x"]) / 2.0) + 0.5,
+        //     (static_cast<float>(bbox_size["y"]) / 2.0) + 0.5,
+        //     (static_cast<float>(bbox_size["z"]) / 2.0) + 0.5,
+        //     0.0);
         
         crop_box.setMin(min_point);
         crop_box.setMax(max_point);
@@ -221,6 +248,14 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
         std::stringstream out_pcd_name;
         out_pcd_name << label << "-" <<
             pcd_fn.substr(0, pcd_fn.size() - 4) << "-" << curr_det_idx << ".pcd";
+
+        if (out_cloud.size() < min_nb_points_threshold)
+        {
+            std::cout << "Skipped: " << out_pcd_name.str() <<
+                " because number of points is " <<
+                out_cloud.size() << " < " << min_nb_points_threshold << std::endl;
+            break;
+        }
 
         std::stringstream out_pcd_path;
         out_pcd_path << out_folder_pcd_ << "/" << out_pcd_name.str();
@@ -246,13 +281,6 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
-    // pcl::visualization::PCLVisualizer::GeometryHandlerPtr geometry_handler;
-    // viewer->addPointCloud<pcl::PointXYZ>(
-    //     &in_cloud_blob,
-    //     geometry_handler,
-    //     Eigen::Vector4f(0, 0, 0, 0),
-    //     Eigen::Quaternionf(1, 0, 0, 0),
-    //     "sample cloud");
 
     viewer->addPointCloud<pcl::PointXYZ>(
         in_cloud,
@@ -279,8 +307,7 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
         Eigen::Vector3f translation(
             static_cast<float>(bbox_pos["x"]),
             static_cast<float>(bbox_pos["y"]),
-            // static_cast<float>(bbox_pos["z"]) / 2.0);
-            static_cast<float>(bbox_pos["z"]));
+            static_cast<float>(bbox_pos["z"]) + 1.4);
 
         Eigen::Quaternionf quarternion(
             bbox_ori["w"],
@@ -288,16 +315,12 @@ void ExtractPointCloudObjects::visualize_objects_in_pcd(
             bbox_ori["y"],
             bbox_ori["z"]);
         
-        double depth = static_cast<float>(bbox_size["z"]);
-        double width = static_cast<float>(bbox_size["x"]);
-        double height = static_cast<float>(bbox_size["y"]);
+        double depth = static_cast<float>(bbox_size["z"]) + 1.0;
+        double width = static_cast<float>(bbox_size["x"]) + 1.0;
+        double height = static_cast<float>(bbox_size["y"]) + 1.0;
 
         // Get Label
         std::string label = dets3d[i]["label"];
-        
-        // double depth = static_cast<double>(bbox_size["x"]);
-        // double width = static_cast<double>(bbox_size["y"]);
-        // double height = static_cast<double>(bbox_size["z"]);
         
         viewer->addCube(
             translation,

@@ -63,7 +63,7 @@ class Bag2Files:
         self._sub_pcl = message_filters.Subscriber(self._in_pcl_topic, PointCloud2)
         self._sub_detections_3d = message_filters.Subscriber(self._in_detections_3d_topic, Detection3DArray)
 
-        ts = message_filters.ApproximateTimeSynchronizer([self._sub_pcl, self._sub_detections_3d], 1, 0.03)
+        ts = message_filters.ApproximateTimeSynchronizer([self._sub_pcl, self._sub_detections_3d], 1, 0.01)
 
         ts.registerCallback(self.callback)
     
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     out_sync_lidar_topic = '/sync/lidar'
     
     # bag_name = 'bag1_2020-04-05-09-05-20.bag'
-    bag_name = 'bag3_2020-05-01-11-15-05.bag'
+    bag_name = 'bag5_2020-05-05-15-11-17.bag'
     out_folder_path = os.path.join('/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs', bag_name)
 
     bag_2_files_node = Bag2Files(in_pcl_topic, in_detections_3d_topic, out_sync_lidar_topic, out_folder_path)
