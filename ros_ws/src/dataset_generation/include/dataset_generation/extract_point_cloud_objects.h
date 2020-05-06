@@ -13,6 +13,7 @@
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/impl/crop_box.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
+// #include <pcl/common/impl/transforms.hpp>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
@@ -136,6 +137,7 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds(
     int min_nb_points_threshold)
 {
     // Iterate over all PCD files, find their corresponding detections
+    int i = 0;
     for (const auto& pair_fn : common_fn_vec_)
     {
         std::string pcd_fn = pair_fn.first;
@@ -157,6 +159,9 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds(
             dets3d_json,
             pcd_fn,
             min_nb_points_threshold);
+        
+        if (i > 2) break;
+        i++;
     }
 
     // Print out how many objects were found
@@ -243,24 +248,41 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
         pcl::PointCloud<pcl::PointXYZ> out_cloud;
         crop_box.filter(out_cloud);
 
+        // Create output pcd file name
         std::string label = dets3d[i]["label"];
 
         std::stringstream out_pcd_name;
         out_pcd_name << label << "-" <<
             pcd_fn.substr(0, pcd_fn.size() - 4) << "-" << curr_det_idx << ".pcd";
 
+        // Make sure the number points are above the threshold
         if (out_cloud.size() < min_nb_points_threshold)
         {
             std::cout << "Skipped: " << out_pcd_name.str() <<
                 " because number of points is " <<
                 out_cloud.size() << " < " << min_nb_points_threshold << std::endl;
-            break;
+            continue;
         }
+
+        // Inverse Transform the extracted cloud
+        pcl::PointCloud<pcl::PointXYZ> out_cloud_transformed;
+
+        // Calculate inverse transform
+        Eigen::Vector3f translation_inv = -translation;
+        Eigen::Quaternionf quaternion_inv = quarternion.inverse();
+
+        std::cout << translation_inv << std::endl;
+
+        pcl::transformPointCloud(
+            out_cloud,
+            out_cloud_transformed,
+            translation_inv,
+            quaternion_inv);
 
         std::stringstream out_pcd_path;
         out_pcd_path << out_folder_pcd_ << "/" << out_pcd_name.str();
         
-        pcl::io::savePCDFileASCII(out_pcd_path.str(), out_cloud);
+        pcl::io::savePCDFileASCII(out_pcd_path.str(), out_cloud_transformed);
 
         std::cout << "Extracted: " << out_pcd_name.str() << std::endl;
 

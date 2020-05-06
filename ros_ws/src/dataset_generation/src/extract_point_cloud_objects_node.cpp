@@ -39,15 +39,14 @@ int main(int argc, char** argv)
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/detections_3d";
 
     std::string out_folder_pcd =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_pcd_objects";
-
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
 
     dataset_generation::ExtractPointCloudObjects epco(
         in_folder_pcd,
         in_folder_dets3d,
         out_folder_pcd);
     
-    int min_nb_points_threshold = 50;
+    int min_nb_points_threshold = 100;
 
     epco.extract_objects_from_all_pcds(min_nb_points_threshold);
 
