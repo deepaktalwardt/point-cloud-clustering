@@ -9,17 +9,18 @@ from lgsvl_msgs.msg import Detection3DArray, Detection3D, BoundingBox3D
 from datetime import datetime
 
 import json
-import yaml
 
 class Bag2Files:
 
     """
     Make sure to run this before in a separate terminal
-    $ rosrun pcl_ros pointcloud_to_pcd i input:=/sync/lidar _prefix:=/h"o/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag1_2020-04-05-09-05-20.bag/pcd/" _binary:=false
+    $ rosrun pcl_ros pointoud_to_pcd input:=/sync/lidar _prefix:="/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag3_2020-05-01-11-15-05.bag/pcd/" _binary:=false
     """
 
     def __init__(self, in_pcl_topic, in_detections_3d_topic, out_sync_lidar_topic, out_folder_path):
-
+        """
+        Constructor for the Bag2Files class
+        """
         rospy.init_node("bag2files")
 
         self._in_pcl_topic = in_pcl_topic
@@ -48,6 +49,9 @@ class Bag2Files:
         rospy.spin()
     
     def create_output_folders(self):
+        """
+        This function creates output folders if not already created
+        """
         try:
             if not os.path.exists(self._out_pcd_path):
                 os.makedirs(self._out_pcd_path)
@@ -59,16 +63,25 @@ class Bag2Files:
             print(e)
             return False
     
+
     def listener(self):
+        """
+        This listener function initializes the subscribers and sets up the time synchronizer object
+        """
         self._sub_pcl = message_filters.Subscriber(self._in_pcl_topic, PointCloud2)
         self._sub_detections_3d = message_filters.Subscriber(self._in_detections_3d_topic, Detection3DArray)
 
-        ts = message_filters.ApproximateTimeSynchronizer([self._sub_pcl, self._sub_detections_3d], 1, 0.1)
+        # Time Synchronizer to synchronize detections and Point Clouds to within 0.01 seconds
+        ts = message_filters.ApproximateTimeSynchronizer([self._sub_pcl, self._sub_detections_3d], 1, 0.01)
 
+        # Call the callback on synchronized messages
         ts.registerCallback(self.callback)
     
+    
     def callback(self, pcl_msg, dets_3d_msg):
-
+        """
+        This callback method takes in pcl_msg and dets_3d_msg and saves them appropriately
+        """
         to_save_as = str(pcl_msg.header.stamp.secs) + str(pcl_msg.header.stamp.nsecs)[:-3]
 
         if (len(dets_3d_msg.detections) > 0):
@@ -79,7 +92,11 @@ class Bag2Files:
         else:
             print("Skipped saving at " + to_save_as + ". No detections found.")
     
+
     def save_dets_3d_json(self, dets_3d_msg, to_save_as):
+        """
+        This method is called by the callback and is used to save detections as JSON files to disk
+        """
         dets_3d_msg_yaml = yaml.load(str(dets_3d_msg))
         dets_3d_msg_json = json.dumps(dets_3d_msg_yaml, indent=4)
 
@@ -91,13 +108,20 @@ class Bag2Files:
 
 if __name__ == "__main__":
 
+    # Define the topics to subscribe to
     in_pcl_topic = '/simulator/lidar'
     in_detections_3d_topic = '/simulator/ground_truth/3d_detections'
+
+    # Define the topic to publish synchronized LiDAR point clouds to
     out_sync_lidar_topic = '/sync/lidar'
     
-    bag_name = 'bag1_2020-04-05-09-05-20.bag'
+    # To be used as the folder name
+    bag_name = 'bag5_2020-05-05-15-11-17.bag'
+    
+    # Path where to save outputs from the bag
     out_folder_path = os.path.join('/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs', bag_name)
 
+    # Create object
     bag_2_files_node = Bag2Files(in_pcl_topic, in_detections_3d_topic, out_sync_lidar_topic, out_folder_path)
 
 
