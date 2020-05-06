@@ -9,6 +9,7 @@
 
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/common/io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
 #include <pcl/filters/crop_box.h>
@@ -61,6 +62,13 @@ public:
     void concatenate_objects_and_visualize(
         const std::string& in_folder_path,
         const std::string& object_name);
+    /*    
+    bool concatenate(pcl::PointCloud<PointT> &cloud1,
+                   const pcl::PointCloud<PointT> &cloud2);
+    bool concatenate(const pcl::PointCloud<PointT> &cloud1,
+                const pcl::PointCloud<PointT> &cloud2,
+                pcl::PointCloud<PointT> &cloud_out);
+*/
 
 private:
     std::string in_folder_pcd_;
@@ -323,7 +331,32 @@ void ExtractPointCloudObjects::extract_objects_from_pcd(
         labels_count_map_[label]++;
     }
 }
+/*
+bool ExtractPointCloudObjects::concatenate(pcl::PointCloud<PointT> &cloud1,
+                   const pcl::PointCloud<PointT> &cloud2)
+{
+    / Make the resultant point cloud take the newest stamp
+    cloud1.header.stamp = std::max (cloud1.header.stamp, cloud2.header.stamp);
 
+    // libstdc++ (GCC) on calling reserve allocates new memory, copies and deallocates old vector
+    // This causes a drastic performance hit. Prefer not to use reserve with libstdc++ (default on clang)
+    cloud1.points.insert (cloud1.points.end (), cloud2.points.begin (), cloud2.points.end ());
+
+    cloud1.width    = static_cast<std::uint32_t>(cloud1.points.size ());
+    cloud1.height   = 1;
+    cloud1.is_dense = cloud1.is_dense && cloud2.is_dense;
+    return true;
+}
+
+bool ExtractPointCloudsObjects :: concatenate(
+                const pcl::PointCloud<PointT> &cloud1,
+                const pcl::PointCloud<PointT> &cloud2,
+                pcl::PointCloud<PointT> &cloud_out)
+{
+    cloud_out = cloud1;
+    return concatenate(cloud_out, cloud2);
+}
+*/
 /**
  * Draws bounding boxes around all the objects in the provided point cloud. Uses the detections
  * json file.
@@ -431,6 +464,7 @@ void ExtractPointCloudObjects::visualize_pcd(
     visualize_cloud_only(in_cloud_blob);
 }
 
+
 /**
  * Load all PCD files in the `in_folder_path` of type `object_name` and visualize them
  * all together.
@@ -447,6 +481,9 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
     viewer->setBackgroundColor(0, 0, 0);
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters(); 
+    
+    // Create a common concatenation object for each PCD file of the detection type
+    pcl::PCLPointCloud2 cloud_all;
 
     // For each file
     for (const auto& fn : pcd_fn_set)
@@ -476,6 +513,20 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r_color, g_color, b_color, fn);
         }
     }
+
+    //Concate the pcd files
+    for (const auto& fn : pcd_fn_set)
+    {
+        // Only compute if file is of `object_name` type
+        if (fn.find(object_name) != std::string::npos)
+        {
+            std::string pcd_file_path = in_folder_path + "/" + fn;
+            pcl::PCLPointCloud2 cloud_blob;
+            pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
+            pcl::concatenate(cloud_all, cloud_blob,cloud_all);
+        }
+    }
+    pcl::io::savePCDFile("/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/save_jeep.pcd",cloud_all);
 
     // Visualization while loop
     while (!viewer->wasStopped())
