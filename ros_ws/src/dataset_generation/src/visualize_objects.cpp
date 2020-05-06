@@ -7,10 +7,13 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
+#include "dataset_generation/extract_point_cloud_objects.h"
+
 using namespace std::literals::chrono_literals;
 
-int main(int argc, char** argv)
+void visualize_single_transformed_cloud()
 {
+    // std::string pcd_fn = "Hatchback-1588716689396305-2.pcd";
     std::string pcd_fn = "SUV-1588716715266281-2.pcd";
 
     std::string non_transformed_cloud_path =
@@ -50,6 +53,28 @@ int main(int argc, char** argv)
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
+}
+
+int main(int argc, char** argv)
+{
+    std::string objects_pcd_folder =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
+
+    std::string in_folder_pcd =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/pcd";
+    
+    std::string in_folder_dets3d =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/detections_3d";
+
+    std::string out_folder_pcd =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
+
+    dataset_generation::ExtractPointCloudObjects epco(
+        in_folder_pcd,
+        in_folder_dets3d,
+        out_folder_pcd);
+
+    epco.concatenate_objects_and_visualize(objects_pcd_folder, "Jeep");
 
     return 0;
 }

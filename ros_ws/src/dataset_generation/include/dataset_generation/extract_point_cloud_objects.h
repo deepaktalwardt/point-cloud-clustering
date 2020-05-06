@@ -30,6 +30,8 @@ class ExtractPointCloudObjects
 {
 
 public:
+    ExtractPointCloudObjects();
+
     ExtractPointCloudObjects(
         std::string in_folder_pcd,
         std::string in_folder_dets3d,
@@ -50,6 +52,10 @@ public:
     
     void visualize_cloud_only(
         pcl::PCLPointCloud2 in_cloud_blob);
+    
+    void concatenate_objects_and_visualize(
+        const std::string& in_folder_path,
+        const std::string& object_name);
 
 private:
     std::string in_folder_pcd_;
@@ -94,6 +100,8 @@ void get_files_in_directory(
     closedir(dir);
 }
 
+ExtractPointCloudObjects::ExtractPointCloudObjects() {}
+
 ExtractPointCloudObjects::ExtractPointCloudObjects(
     std::string in_folder_pcd,
     std::string in_folder_dets3d,
@@ -137,7 +145,6 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds(
     int min_nb_points_threshold)
 {
     // Iterate over all PCD files, find their corresponding detections
-    int i = 0;
     for (const auto& pair_fn : common_fn_vec_)
     {
         std::string pcd_fn = pair_fn.first;
@@ -159,9 +166,6 @@ void ExtractPointCloudObjects::extract_objects_from_all_pcds(
             dets3d_json,
             pcd_fn,
             min_nb_points_threshold);
-        
-        if (i > 2) break;
-        i++;
     }
 
     // Print out how many objects were found
@@ -206,13 +210,13 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
             static_cast<float>(bbox_pos["y"]),
             static_cast<float>(bbox_pos["z"]));
 
-        Eigen::Quaternionf quarternion(
+        Eigen::Quaternionf quaternion(
             bbox_ori["w"],
             bbox_ori["x"],
             bbox_ori["y"],
             bbox_ori["z"]);
         
-        Eigen::Vector3f euler_angles = quarternion.toRotationMatrix().eulerAngles(0, 1, 2);
+        Eigen::Vector3f euler_angles = quaternion.toRotationMatrix().eulerAngles(0, 1, 2);
 
         crop_box.setTranslation(translation);
         crop_box.setRotation(euler_angles);
@@ -267,17 +271,73 @@ bool ExtractPointCloudObjects::extract_objects_from_pcd(
         // Inverse Transform the extracted cloud
         pcl::PointCloud<pcl::PointXYZ> out_cloud_transformed;
 
+        ////////////////////////////////////////////////////////////////////////////////////
         // Calculate inverse transform
-        Eigen::Vector3f translation_inv = -translation;
-        Eigen::Quaternionf quaternion_inv = quarternion.inverse();
+        // Eigen::Vector3f translation_inv;
+        // Eigen::Vector3f translation_inv(15.779, 2.93393, 2.38636);
 
-        std::cout << translation_inv << std::endl;
+        // float x_avg = 0.0, y_avg = 0.0, z_avg = 0.0;
+        // for (int p = 0; p < out_cloud.size(); p++)
+        // {
+        //     x_avg += out_cloud.points[p].x;
+        //     y_avg += out_cloud.points[p].y;
+        //     z_avg += out_cloud.points[p].z;
+        // }
+        // x_avg = x_avg / static_cast<float>(out_cloud.size());
+        // y_avg = y_avg / static_cast<float>(out_cloud.size());
+        // z_avg = z_avg / static_cast<float>(out_cloud.size());
+
+        // std::cout << "average: " << std::endl << Eigen::Vector3f(x_avg, y_avg, z_avg) << std::endl;
+
+
+
+        Eigen::Vector3f translation_inv = -translation;
+        // Eigen::Vector3f translation_inv(-x_avg, -y_avg, -z_avg);
+        
+        // translation_inv(0) = y_avg < 0 ? -translation(1) : translation(1);
+        // translation_inv(1) = z_avg < 0 ? -translation(2) : translation(2);
+        // translation_inv(2) = x_avg < 0 ? -translation(0) : translation(0);
+
+
+
+        // translation_inv << 0, 0, 0;
+        // translation_inv = translation;
+        // translation_inv << translation(1), -translation(0), -translation(2);
+        // translation_inv << -translation(1), -translation(2), -translation(0);
+        // translation_inv << translation(1), -translation(2), -translation(0);
+        // Eigen::Quaternionf quaternion_inv = quarternion.inverse();
+        Eigen::Quaternionf quaternion_inv(1, 0, 0, 0);
+
+        // std::cout << "translation: " << std::endl << translation << std::endl;
+        // std::cout << "translation_inv: " << std::endl <<  translation_inv << std::endl;
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        // Eigen::Affine3f transform_inv = Eigen::Affine3f::Identity();
+        // transform_inv.translation() << translation(1), -translation(2), -translation(0);
+
+        // Eigen::Quaternionf quaternion_inv = quarternion.inverse();
+        // Eigen::Matrix3f euler_angles_inv = quaternion_inv.toRotationMatrix();
+        
+        // transform_inv.rotate(euler_angles_inv);
 
         pcl::transformPointCloud(
             out_cloud,
             out_cloud_transformed,
             translation_inv,
             quaternion_inv);
+        
+        pcl::transformPointCloud(
+            out_cloud_transformed,
+            out_cloud_transformed,
+            Eigen::Vector3f(0, 0, 0),
+            quaternion.inverse());
+
+        // pcl::transformPointCloud(
+        //     out_cloud,
+        //     out_cloud_transformed,
+        //     transform_inv);
+
+        // std::cout << "Inverse Transform: " << transform_inv.matrix() << std::endl;
 
         std::stringstream out_pcd_path;
         out_pcd_path << out_folder_pcd_ << "/" << out_pcd_name.str();
@@ -376,6 +436,50 @@ void ExtractPointCloudObjects::visualize_cloud_only(
     viewer->initCameraParameters();
 
     while (!viewer->wasStopped ())
+    {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(100ms);
+    }
+}
+
+void ExtractPointCloudObjects::concatenate_objects_and_visualize(
+    const std::string& in_folder_path,
+    const std::string& object_name)
+{
+    std::unordered_set<std::string> pcd_fn_set;
+    get_files_in_directory(in_folder_path, pcd_fn_set);
+    
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters(); 
+
+    for (const auto& fn : pcd_fn_set)
+    {
+        if (fn.find(object_name) != std::string::npos)
+        {
+            std::string pcd_file_path = in_folder_path + "/" + fn;
+            pcl::PCLPointCloud2 cloud_blob;
+            pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::fromPCLPointCloud2(cloud_blob, *cloud_ptr);
+
+            viewer->addPointCloud<pcl::PointXYZ>(cloud_ptr, fn);
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, fn);
+
+            float r_color = 0.4 +
+                static_cast <float>(rand()) / (static_cast<float>(RAND_MAX / (1.0 - 0.4)));
+            float g_color = 0.4 +
+                static_cast <float>(rand()) / (static_cast<float>(RAND_MAX / (1.0 - 0.4)));
+            float b_color = 0.4 +
+                static_cast <float>(rand()) / (static_cast<float>(RAND_MAX / (1.0 - 0.4)));
+
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r_color, g_color, b_color, fn);
+        }
+    }
+
+    while (!viewer->wasStopped())
     {
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
