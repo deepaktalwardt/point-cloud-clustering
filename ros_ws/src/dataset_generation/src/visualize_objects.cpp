@@ -29,9 +29,10 @@ int main(int argc, char** argv)
     // Code below is needed to concatenate all "Jeep"s into one cloud
     std::string objects_pcd_folder =
         "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
-
+    std::string out_pcd_path =
+        "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/"
     epco.concatenate_objects_and_visualize(objects_pcd_folder, "Jeep");
-    epco.concatenate_objects_and_save(objects_pcd_folder,"Jeep");
+    epco.concatenate_objects_and_save(objects_pcd_folder,"Jeep",out_pcd_path);
 
     return 0;
 }

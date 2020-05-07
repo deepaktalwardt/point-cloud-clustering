@@ -8,6 +8,7 @@
 #include <unordered_set>
 
 #include <pcl/ModelCoefficients.h>
+#include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/io.h>
 #include <pcl/point_types.h>
@@ -15,6 +16,7 @@
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/impl/crop_box.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -65,7 +67,8 @@ public:
 
     void concatenate_objects_and_save(
         const std::string& in_folder_path,
-        const std::string& object_name);
+        const std::string& object_name
+        const std::string& out_pcd_path);
 
 private:
     std::string in_folder_pcd_;
@@ -495,7 +498,8 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
 
 void ExtractPointCloudObjects :: concatenate_objects_and_save(
                             const std::string& in_folder_path,
-                            const std::string& object_name)
+                            const std::string& object_name
+                            const std::string& out_pcd_path)
 {
     std::unordered_set<std::string> pcd_fn_set;
     get_files_in_directory(in_folder_path, pcd_fn_set);
@@ -514,11 +518,10 @@ void ExtractPointCloudObjects :: concatenate_objects_and_save(
             pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZ>);
             pcl::fromPCLPointCloud2(cloud_blob, *cloud_temp);
-            //pcl::io::concatenate(cloud_all, cloud_blob,cloud_all);
             cloud_all += *cloud_temp;
         }
     }
-    std::string save_path = "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/" + object_name + ".pcd";
+    std::string save_path = out_pcd_path + object_name + ".pcd";
     pcl::io::savePCDFile(save_path,cloud_all);
 }
 
