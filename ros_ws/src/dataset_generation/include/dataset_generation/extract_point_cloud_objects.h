@@ -16,7 +16,6 @@
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/impl/crop_box.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/filters/voxel_grid.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
