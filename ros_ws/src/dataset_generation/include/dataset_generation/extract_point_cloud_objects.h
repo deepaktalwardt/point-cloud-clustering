@@ -67,7 +67,7 @@ public:
 
     void concatenate_objects_and_save(
         const std::string& in_folder_path,
-        const std::string& object_name
+        const std::string& object_name,
         const std::string& out_pcd_path);
 
 private:
@@ -498,7 +498,7 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
 
 void ExtractPointCloudObjects :: concatenate_objects_and_save(
                             const std::string& in_folder_path,
-                            const std::string& object_name
+                            const std::string& object_name,
                             const std::string& out_pcd_path)
 {
     std::unordered_set<std::string> pcd_fn_set;
