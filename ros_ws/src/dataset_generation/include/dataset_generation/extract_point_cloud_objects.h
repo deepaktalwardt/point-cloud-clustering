@@ -8,7 +8,9 @@
 #include <unordered_set>
 
 #include <pcl/ModelCoefficients.h>
+#include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/common/io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
 #include <pcl/filters/crop_box.h>
@@ -61,6 +63,11 @@ public:
     void concatenate_objects_and_visualize(
         const std::string& in_folder_path,
         const std::string& object_name);
+
+    void concatenate_objects_and_save(
+        const std::string& in_folder_path,
+        const std::string& object_name,
+        const std::string& out_pcd_path);
 
 private:
     std::string in_folder_pcd_;
@@ -431,6 +438,7 @@ void ExtractPointCloudObjects::visualize_pcd(
     visualize_cloud_only(in_cloud_blob);
 }
 
+
 /**
  * Load all PCD files in the `in_folder_path` of type `object_name` and visualize them
  * all together.
@@ -447,7 +455,7 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
     viewer->setBackgroundColor(0, 0, 0);
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters(); 
-
+    
     // For each file
     for (const auto& fn : pcd_fn_set)
     {
@@ -477,12 +485,43 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
         }
     }
 
+    
+
     // Visualization while loop
     while (!viewer->wasStopped())
     {
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
+}
+
+void ExtractPointCloudObjects :: concatenate_objects_and_save(
+                            const std::string& in_folder_path,
+                            const std::string& object_name,
+                            const std::string& out_pcd_path)
+{
+    std::unordered_set<std::string> pcd_fn_set;
+    get_files_in_directory(in_folder_path, pcd_fn_set);
+
+    // Create a common concatenation object for each PCD file of the detection type
+    pcl::PointCloud<pcl::PointXYZ>cloud_all;
+
+    //Concate the pcd files
+    for (const auto& fn : pcd_fn_set)
+    {
+        // Only compute if file is of `object_name` type
+        if (fn.find(object_name) != std::string::npos)
+        {
+            std::string pcd_file_path = in_folder_path + "/" + fn;
+            pcl::PCLPointCloud2 cloud_blob;
+            pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::fromPCLPointCloud2(cloud_blob, *cloud_temp);
+            cloud_all += *cloud_temp;
+        }
+    }
+    std::string save_path = out_pcd_path + object_name + ".pcd";
+    pcl::io::savePCDFile(save_path,cloud_all);
 }
 
 }   // namespace dataset_generation
