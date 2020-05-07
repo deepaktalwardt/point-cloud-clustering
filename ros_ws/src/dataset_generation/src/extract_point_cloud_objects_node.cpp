@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         in_folder_dets3d,
         out_folder_pcd);
     
-    int min_nb_points_threshold = 1;
+    int min_nb_points_threshold = 100;
 
     epco.extract_objects_from_all_pcds(min_nb_points_threshold);
 
