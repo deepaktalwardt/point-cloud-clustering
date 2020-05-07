@@ -30,7 +30,12 @@ int main(int argc, char** argv)
     std::string objects_pcd_folder =
         "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
 
-    epco.concatenate_objects_and_visualize(objects_pcd_folder, "Jeep");
+    //epco.concatenate_objects_and_visualize(objects_pcd_folder, "Jeep");
+    std::string objects[] = {"Jeep","Sedan","SUV","Hatchback","Pedestrian","SchoolBus"};
+    for(int i=0; i<sizeof(objects); i++)
+    {
+        epco.concatenate_objects_and_save(objects_pcd_folder,objects[i]);
+    }
 
     return 0;
 }

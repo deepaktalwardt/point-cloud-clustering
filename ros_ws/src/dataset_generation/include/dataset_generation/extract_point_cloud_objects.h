@@ -62,13 +62,10 @@ public:
     void concatenate_objects_and_visualize(
         const std::string& in_folder_path,
         const std::string& object_name);
-    /*    
-    bool concatenate(pcl::PointCloud<PointT> &cloud1,
-                   const pcl::PointCloud<PointT> &cloud2);
-    bool concatenate(const pcl::PointCloud<PointT> &cloud1,
-                const pcl::PointCloud<PointT> &cloud2,
-                pcl::PointCloud<PointT> &cloud_out);
-*/
+
+    void concatenate_objects_and_save(
+        const std::string& in_folder_path,
+        const std::string& object_name);
 
 private:
     std::string in_folder_pcd_;
@@ -331,32 +328,7 @@ void ExtractPointCloudObjects::extract_objects_from_pcd(
         labels_count_map_[label]++;
     }
 }
-/*
-bool ExtractPointCloudObjects::concatenate(pcl::PointCloud<PointT> &cloud1,
-                   const pcl::PointCloud<PointT> &cloud2)
-{
-    / Make the resultant point cloud take the newest stamp
-    cloud1.header.stamp = std::max (cloud1.header.stamp, cloud2.header.stamp);
 
-    // libstdc++ (GCC) on calling reserve allocates new memory, copies and deallocates old vector
-    // This causes a drastic performance hit. Prefer not to use reserve with libstdc++ (default on clang)
-    cloud1.points.insert (cloud1.points.end (), cloud2.points.begin (), cloud2.points.end ());
-
-    cloud1.width    = static_cast<std::uint32_t>(cloud1.points.size ());
-    cloud1.height   = 1;
-    cloud1.is_dense = cloud1.is_dense && cloud2.is_dense;
-    return true;
-}
-
-bool ExtractPointCloudsObjects :: concatenate(
-                const pcl::PointCloud<PointT> &cloud1,
-                const pcl::PointCloud<PointT> &cloud2,
-                pcl::PointCloud<PointT> &cloud_out)
-{
-    cloud_out = cloud1;
-    return concatenate(cloud_out, cloud2);
-}
-*/
 /**
  * Draws bounding boxes around all the objects in the provided point cloud. Uses the detections
  * json file.
@@ -482,9 +454,6 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters(); 
     
-    // Create a common concatenation object for each PCD file of the detection type
-    pcl::PCLPointCloud2 cloud_all;
-
     // For each file
     for (const auto& fn : pcd_fn_set)
     {
@@ -514,6 +483,26 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
         }
     }
 
+    
+
+    // Visualization while loop
+    while (!viewer->wasStopped())
+    {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(100ms);
+    }
+}
+
+void ExtractPointCloudObjects :: concatenate_objects_and_save(
+                            const std::string& in_folder_path,
+                            const std::string& object_name)
+{
+    std::unordered_set<std::string> pcd_fn_set;
+    get_files_in_directory(in_folder_path, pcd_fn_set);
+
+    // Create a common concatenation object for each PCD file of the detection type
+    pcl::PointCloud<pcl::PointXYZ>cloud_all;
+
     //Concate the pcd files
     for (const auto& fn : pcd_fn_set)
     {
@@ -523,17 +512,14 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
             std::string pcd_file_path = in_folder_path + "/" + fn;
             pcl::PCLPointCloud2 cloud_blob;
             pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
-            pcl::concatenate(cloud_all, cloud_blob,cloud_all);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::fromPCLPointCloud2(cloud_blob, *cloud_temp);
+            //pcl::io::concatenate(cloud_all, cloud_blob,cloud_all);
+            cloud_all += *cloud_temp;
         }
     }
-    pcl::io::savePCDFile("/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/save_jeep.pcd",cloud_all);
-
-    // Visualization while loop
-    while (!viewer->wasStopped())
-    {
-        viewer->spinOnce(100);
-        std::this_thread::sleep_for(100ms);
-    }
+    std::string save_path = "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/" + object_name + ".pcd";
+    pcl::io::savePCDFile(save_path,cloud_all);
 }
 
 }   // namespace dataset_generation
