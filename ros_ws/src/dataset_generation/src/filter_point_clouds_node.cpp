@@ -19,6 +19,9 @@ int main()
     // pcf.apply_voxel_filter_and_visualize(in_pcd_file, 0.05, 0.05, 0.05);
     // pcf.apply_voxel_filter_and_save(in_pcd_file, out_pcd_file, 0.05, 0.05, 0.05);
 
-    pcf.remove_ground_and_visualize(in_pcd_file, 0.1, 2);
+    pcf.apply_radial_filter_and_visualize(in_pcd_file, 0.05, 3);
+    // pcf.apply_radial_filter_and_save(in_pcd_file, out_pcd_file, 0.1, 7);
+
+    pcf.apply_ground_removal_and_visualize(in_pcd_file, 0.1, 2);
     // pcf.apply_pass_filter_and_save(in_pcd_file, out_pcd_file,0.15,2);
 }

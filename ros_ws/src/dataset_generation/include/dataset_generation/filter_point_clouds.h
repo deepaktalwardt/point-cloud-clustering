@@ -9,6 +9,7 @@
 #include <pcl/common/io.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
@@ -34,29 +35,45 @@ public:
         const float& leaf_size_z);
 
     void apply_voxel_filter_and_save(
-        std::string in_pcd_path,
-        std::string out_pcd_path,
+        const std::string& in_pcd_path,
+        const std::string& out_pcd_path,
         const float& leaf_size_x,
         const float& leaf_size_y,
         const float& leaf_size_z);
     
     void apply_voxel_filter_and_visualize(
-        std::string in_pcd_path,
+        const std::string& in_pcd_path,
         const float& leaf_size_x,
         const float& leaf_size_y,
         const float& leaf_size_z);
     
-    pcl::PointCloud<pcl::PointXYZ>::Ptr remove_ground(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_radial_filter(
+        pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
+        const float& radius,
+        const float& min_nb_neighbors);
+
+    void apply_radial_filter_and_visualize(
+        const std::string& in_pcd_path,
+        const float& radius,
+        const float& min_nb_neighbors);
+
+    void apply_radial_filter_and_save(
+        const std::string& in_pcd_path,
+        const std::string& out_pcd_path,
+        const float& radius,
+        const float& min_nb_neighbors);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_ground_removal(
         pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
         const float& min_range,
         const float& max_range);
 
-    void remove_ground_and_visualize(
+    void apply_ground_removal_and_visualize(
         std::string in_pcd_path,
         const float& min_range,
         const float& max_range);
 
-    void remove_ground_and_save(
+    void apply_ground_removal_and_save(
         std::string in_pcd_path,
         std::string out_pcd_path,
         const float& min_range,
@@ -103,12 +120,47 @@ pcl::PCLPointCloud2 PointCloudFiltering::apply_voxel_filter(
 }
 
 /**
+ * Applies radial filter to the cloud pointer. Explanation for this is available here:
+ * https://pcl-tutorials.readthedocs.io/en/master/radius_outlier_removal.html?highlight=radial%20filter
+ * 
+ * It will remove points from a PointCloud that do not have a given number of neighbors within a 
+ * specific radius from their location.
+*/
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
+    const float& radius,
+    const float& min_nb_neighbors)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ> ());
+
+    std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
+		   << " data points (" << pcl::getFieldsList (*cloud) << ")." << std::endl;
+
+	// Create the filtering object
+	pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
+
+	// build the filter
+	outrem.setInputCloud(cloud);
+	outrem.setRadiusSearch(radius);
+	outrem.setMinNeighborsInRadius(min_nb_neighbors);
+
+	// apply filter
+	outrem.filter (*cloud_filtered);
+
+	std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height 
+		   << " data points (" << pcl::getFieldsList (*cloud_filtered) << ")." << std::endl;
+	
+    return cloud_filtered;
+}
+
+
+/**
  * Removes all the points on the ground plane from the input point cloud using the
  * PassThrough filter. Returns the filtered Point Cloud pointer.
  * Points that lie between min_range and max_range along the z-axis are KEPT. Everything
  * else is removed.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::remove_ground(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
     const float& min_range,
     const float& max_range)
@@ -132,11 +184,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::remove_ground(
     return cloud_filtered;
 }
 
+
 /**
  * Applies Voxel Filter and visualizes in PCL Visualizer
 */
 void PointCloudFiltering::apply_voxel_filter_and_visualize(
-    std::string in_pcd_path,
+    const std::string& in_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
     const float& leaf_size_z)
@@ -182,8 +235,8 @@ void PointCloudFiltering::apply_voxel_filter_and_visualize(
  * Applies Voxel Filter and saves the resulting PCD file to out_pcd_path
 */
 void PointCloudFiltering::apply_voxel_filter_and_save(
-    std::string in_pcd_path,
-    std::string out_pcd_path,
+    const std::string& in_pcd_path,
+    const std::string& out_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
     const float& leaf_size_z)
@@ -208,9 +261,69 @@ void PointCloudFiltering::apply_voxel_filter_and_save(
 }
 
 /**
+ * Applies radial filter to the point cloud at in_pcd_path and saves it at out_pcd_path
+*/
+void PointCloudFiltering::apply_radial_filter_and_save(
+    const std::string& in_pcd_path,
+    const std::string& out_pcd_path,
+    const float& radius,
+    const float& min_nb_neighbors)
+{
+     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    // Fill in the cloud data
+    pcl::PCDReader reader;
+    reader.read(in_pcd_path, *cloud);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_radial_filter(
+        cloud,
+        radius,
+        min_nb_neighbors);
+
+    pcl::PCDWriter writer;
+    writer.write(out_pcd_path, *cloud_filtered);
+}
+
+/**
+ * Applies radial filter to the point cloud at in_pcd_path and visualizes it in PCLVisualizer
+*/
+void PointCloudFiltering::apply_radial_filter_and_visualize(
+    const std::string& in_pcd_path,
+    const float& radius,
+    const float& min_nb_neighbors)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    pcl::PCDReader reader;
+    reader.read(in_pcd_path, *cloud);
+
+    // Fill in the cloud data
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_radial_filter(
+        cloud,
+        radius,
+        min_nb_neighbors);
+    
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+
+    viewer->addPointCloud<pcl::PointXYZ>(
+        cloud_filtered,
+        "Radial Filtered point cloud");
+
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Radial Filtered point cloud");
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters();
+
+    while(!viewer->wasStopped())
+    {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(100ms);
+    }
+}
+
+
+/**
  * Takes in_pcd_path to PCD file, removes ground and saves it into a PCD file at out_pcd_path
 */
-void PointCloudFiltering::remove_ground_and_save(
+void PointCloudFiltering::apply_ground_removal_and_save(
     std::string in_pcd_path,
     std::string out_pcd_path,
     const float& min_range,
@@ -222,7 +335,7 @@ void PointCloudFiltering::remove_ground_and_save(
     pcl::PCDReader reader;
     reader.read(in_pcd_path, *cloud);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = remove_ground(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_ground_removal(
         cloud,
         min_range,
         max_range);
@@ -231,10 +344,11 @@ void PointCloudFiltering::remove_ground_and_save(
     writer.write(out_pcd_path, *cloud_filtered);
 }
 
+
 /**
  * Takes in_pcd_path to PCD file, removes ground and visualizes using PCLVisualizer. Use for debugging.
 */
-void PointCloudFiltering::remove_ground_and_visualize(
+void PointCloudFiltering::apply_ground_removal_and_visualize(
     std::string in_pcd_path,
     const float& min_range,
     const float& max_range)
@@ -244,7 +358,7 @@ void PointCloudFiltering::remove_ground_and_visualize(
     reader.read(in_pcd_path, *cloud);
     
     // Fill in the cloud data
-   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = remove_ground(
+   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_ground_removal(
         cloud,
         min_range,
         max_range);
