@@ -3,7 +3,6 @@
 #include <iostream>
 #include <thread>
 #include <string>
-#include <sstream>
 
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
@@ -12,16 +11,13 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-
 
 using namespace std::literals::chrono_literals;
 
 namespace dataset_generation
 {
-
 
 class PointCloudFiltering
 {
@@ -30,34 +26,45 @@ public:
 
     ~PointCloudFiltering();
 
-    void apply_voxel_filter_and_save(std::string in_folder_path,
-        std::string out_folder_path,float leaf_size_x, float leaf_size_y, float leaf_size_z);
-    void apply_voxel_filter_and_visualize(std::string in_folder_path,
-        std::string out_folder_path,float leaf_size_x, float leaf_size_y, float leaf_size_z);
+    void apply_voxel_filter_and_save(
+        std::string in_pcd_path,
+        std::string out_pcd_path,
+        const float& leaf_size_x,
+        const float& leaf_size_y,
+        const float& leaf_size_z);
+    
+    void apply_voxel_filter_and_visualize(
+        std::string in_pcd_path,
+        const float& leaf_size_x,
+        const float& leaf_size_y,
+        const float& leaf_size_z);
 };
-PointCloudFiltering::PointCloudFiltering()
-{}
-PointCloudFiltering::~PointCloudFiltering()
-{}
+
+PointCloudFiltering::PointCloudFiltering() = default;
+
+PointCloudFiltering::~PointCloudFiltering() = default;
 
 /*
 apply_voxel_filter_and_save method is a modified version of the VoxelGrid filtering found at: 
 https://pcl-tutorials.readthedocs.io/en/master/voxel_grid.html?highlight=voxelGrid
 */
-void PointCloudFiltering::apply_voxel_filter_and_visualize(std::string in_folder_path,
-            std::string out_folder_path,float leaf_size_x, float leaf_size_y, float leaf_size_z)
+void PointCloudFiltering::apply_voxel_filter_and_visualize(
+    std::string in_pcd_path,
+    const float& leaf_size_x,
+    const float& leaf_size_y,
+    const float& leaf_size_z)
 {
     pcl::PCLPointCloud2::Ptr cloud_read (new pcl::PCLPointCloud2 ());
     pcl::PCLPointCloud2::Ptr cloud_voxelized (new pcl::PCLPointCloud2 ());
     
     //Read PCD files from the path given
     pcl::PCDReader reader;
-    reader.read(in_folder_path, *cloud_read);
+    reader.read(in_pcd_path, *cloud_read);
 
     pcl::VoxelGrid<pcl::PCLPointCloud2> vox;
-    vox.setInputCloud (cloud_read);
-    vox.setLeafSize (leaf_size_x,leaf_size_y,leaf_size_z);
-    vox.filter (*cloud_voxelized);
+    vox.setInputCloud(cloud_read);
+    vox.setLeafSize(leaf_size_x, leaf_size_y, leaf_size_z);
+    vox.filter(*cloud_voxelized);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromPCLPointCloud2(*cloud_voxelized, *in_cloud);
@@ -83,15 +90,19 @@ void PointCloudFiltering::apply_voxel_filter_and_visualize(std::string in_folder
 
 }
 
-void PointCloudFiltering::apply_voxel_filter_and_save(std::string in_folder_path,
-        std::string out_folder_path,float leaf_size_x, float leaf_size_y, float leaf_size_z)
+void PointCloudFiltering::apply_voxel_filter_and_save(
+    std::string in_pcd_path,
+    std::string out_pcd_path,
+    const float& leaf_size_x,
+    const float& leaf_size_y,
+    const float& leaf_size_z)
 {
     pcl::PCLPointCloud2::Ptr cloud_read (new pcl::PCLPointCloud2 ());
     pcl::PCLPointCloud2::Ptr cloud_voxelized (new pcl::PCLPointCloud2 ());
     
     //Read PCD files from the path given
     pcl::PCDReader reader;
-    reader.read(in_folder_path, *cloud_read);
+    reader.read(in_pcd_path, *cloud_read);
 
     std::cerr << "PointCloud before filtering: " << cloud_read->width * cloud_read->height 
        << " data points (" << pcl::getFieldsList (*cloud_read) << ")." << std::endl;
@@ -99,14 +110,14 @@ void PointCloudFiltering::apply_voxel_filter_and_save(std::string in_folder_path
     // Create the filtering object
     pcl::VoxelGrid<pcl::PCLPointCloud2> vox;
     vox.setInputCloud (cloud_read);
-    vox.setLeafSize (leaf_size_x,leaf_size_y,leaf_size_z);
+    vox.setLeafSize (leaf_size_x, leaf_size_y, leaf_size_z);
     vox.filter (*cloud_voxelized);
 
     std::cerr << "PointCloud after filtering: " << cloud_voxelized->width * cloud_voxelized->height 
-       << " data points (" << pcl::getFieldsList (*cloud_voxelized) << ")." << std::endl;
+       << " data points (" << pcl::getFieldsList(*cloud_voxelized) << ")." << std::endl;
 
     pcl::PCDWriter writer;
-    writer.write (out_folder_path, *cloud_voxelized, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
+    writer.write(out_pcd_path, *cloud_voxelized, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
 }
 
 } // namespace dataset_generation
