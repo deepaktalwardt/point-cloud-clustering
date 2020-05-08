@@ -10,6 +10,7 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <Eigen/Dense>
@@ -62,7 +63,21 @@ public:
         const float& radius,
         const float& min_nb_neighbors);
 
-    
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_ground_removal(
+        pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
+        const float& min_range,
+        const float& max_range);
+
+    void apply_ground_removal_and_visualize(
+        std::string in_pcd_path,
+        const float& min_range,
+        const float& max_range);
+
+    void apply_ground_removal_and_save(
+        std::string in_pcd_path,
+        std::string out_pcd_path,
+        const float& min_range,
+        const float& max_range);
 };
 
 /**
@@ -137,6 +152,39 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
 	
     return cloud_filtered;
 }
+
+
+/**
+ * Removes all the points on the ground plane from the input point cloud using the
+ * PassThrough filter. Returns the filtered Point Cloud pointer.
+ * Points that lie between min_range and max_range along the z-axis are KEPT. Everything
+ * else is removed.
+*/
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
+    const float& min_range,
+    const float& max_range)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ> ());
+
+    std::cerr << "PointCloud before filtering: " << in_cloud->width * in_cloud->height 
+       << " data points (" << pcl::getFieldsList(*in_cloud) << ")." << std::endl;
+
+
+    // Create the filtering object
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud(in_cloud);
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits (min_range, max_range);
+    pass.filter(*cloud_filtered);
+
+    std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height
+         << " data points (" << pcl::getFieldsList (*cloud_filtered) << ")." << std::endl;
+        
+    return cloud_filtered;
+}
+
+
 /**
  * Applies Voxel Filter and visualizes in PCL Visualizer
 */
@@ -246,12 +294,74 @@ void PointCloudFiltering::apply_radial_filter_and_visualize(
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
     pcl::PCDReader reader;
     reader.read(in_pcd_path, *cloud);
-    
+
     // Fill in the cloud data
-   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_radial_filter(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_radial_filter(
         cloud,
         radius,
         min_nb_neighbors);
+    
+    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    viewer->setBackgroundColor(0, 0, 0);
+
+    viewer->addPointCloud<pcl::PointXYZ>(
+        cloud_filtered,
+        "Radial Filtered point cloud");
+
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Radial Filtered point cloud");
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters();
+
+    while(!viewer->wasStopped())
+    {
+        viewer->spinOnce(100);
+        std::this_thread::sleep_for(100ms);
+    }
+}
+
+
+/**
+ * Takes in_pcd_path to PCD file, removes ground and saves it into a PCD file at out_pcd_path
+*/
+void PointCloudFiltering::apply_ground_removal_and_save(
+    std::string in_pcd_path,
+    std::string out_pcd_path,
+    const float& min_range,
+    const float& max_range)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> ());
+
+    // Fill in the cloud data
+    pcl::PCDReader reader;
+    reader.read(in_pcd_path, *cloud);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_ground_removal(
+        cloud,
+        min_range,
+        max_range);
+
+    pcl::PCDWriter writer;
+    writer.write(out_pcd_path, *cloud_filtered);
+}
+
+
+/**
+ * Takes in_pcd_path to PCD file, removes ground and visualizes using PCLVisualizer. Use for debugging.
+*/
+void PointCloudFiltering::apply_ground_removal_and_visualize(
+    std::string in_pcd_path,
+    const float& min_range,
+    const float& max_range)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    pcl::PCDReader reader;
+    reader.read(in_pcd_path, *cloud);
+    
+    // Fill in the cloud data
+   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_ground_removal(
+        cloud,
+        min_range,
+        max_range);
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
@@ -264,7 +374,7 @@ void PointCloudFiltering::apply_radial_filter_and_visualize(
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters();
 
-    while (!viewer->wasStopped())
+    while(!viewer->wasStopped())
     {
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
