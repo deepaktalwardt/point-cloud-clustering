@@ -24,7 +24,12 @@ find_package(Boost REQUIRED COMPONENTS
 
 find_package(Eigen)
 
-find_package(PCL 1.7 REQUIRED COMPONENTS common io visualization)
+find_package(PCL 1.7 REQUIRED COMPONENTS
+  common
+  io
+  visualization
+  filters
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -149,11 +154,20 @@ add_executable(extract_point_cloud_objects_node
   src/extract_point_cloud_objects_node.cpp
 )
 
+add_executable(filter_point_clouds_node 
+  src/filter_point_clouds_node.cpp
+)
+
 add_executable(visualize_objects 
   src/visualize_objects.cpp
 )
 
 add_dependencies(extract_point_cloud_objects_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+
+add_dependencies(filter_point_clouds_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )
@@ -164,6 +178,12 @@ add_dependencies(visualize_objects
 )
 
 target_link_libraries(extract_point_cloud_objects_node
+  ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Eigen_LIBRARIES}
+)
+
+target_link_libraries(filter_point_clouds_node
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
   ${Eigen_LIBRARIES}
