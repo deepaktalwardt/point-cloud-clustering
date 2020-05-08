@@ -34,33 +34,33 @@ public:
         const float& leaf_size_z);
 
     void apply_voxel_filter_and_save(
-        std::string in_pcd_path,
-        std::string out_pcd_path,
+        const std::string& in_pcd_path,
+        const std::string& out_pcd_path,
         const float& leaf_size_x,
         const float& leaf_size_y,
         const float& leaf_size_z);
     
     void apply_voxel_filter_and_visualize(
-        std::string in_pcd_path,
+        const std::string& in_pcd_path,
         const float& leaf_size_x,
         const float& leaf_size_y,
         const float& leaf_size_z);
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr apply_radial_filter(
         pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
-        float radius ,
-        float min_neighbour);
+        const float& radius,
+        const float& min_nb_neighbors);
 
     void apply_radial_filter_and_visualize(
-        std::string in_pcd_path,
-        float radius,
-        float min_neighbour);
+        const std::string& in_pcd_path,
+        const float& radius,
+        const float& min_nb_neighbors);
 
     void apply_radial_filter_and_save(
-        std::string in_pcd_path,
-        std::string out_pcd_path,
-        float radius,
-        float min_neighbour);
+        const std::string& in_pcd_path,
+        const std::string& out_pcd_path,
+        const float& radius,
+        const float& min_nb_neighbors);
 
     
 };
@@ -104,10 +104,17 @@ pcl::PCLPointCloud2 PointCloudFiltering::apply_voxel_filter(
     return *cloud_voxelized;
 }
 
+/**
+ * Applies radial filter to the cloud pointer. Explanation for this is available here:
+ * https://pcl-tutorials.readthedocs.io/en/master/radius_outlier_removal.html?highlight=radial%20filter
+ * 
+ * It will remove points from a PointCloud that do not have a given number of neighbors within a 
+ * specific radius from their location.
+*/
 pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
-     float radius,
-     float min_neighbour)
+    const float& radius,
+    const float& min_nb_neighbors)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ> ());
 
@@ -116,10 +123,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
 
 	// Create the filtering object
 	pcl::RadiusOutlierRemoval<pcl::PointXYZ> outrem;
+
 	// build the filter
 	outrem.setInputCloud(cloud);
 	outrem.setRadiusSearch(radius);
-	outrem.setMinNeighborsInRadius (min_neighbour);
+	outrem.setMinNeighborsInRadius(min_nb_neighbors);
+
 	// apply filter
 	outrem.filter (*cloud_filtered);
 
@@ -132,7 +141,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
  * Applies Voxel Filter and visualizes in PCL Visualizer
 */
 void PointCloudFiltering::apply_voxel_filter_and_visualize(
-    std::string in_pcd_path,
+    const std::string& in_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
     const float& leaf_size_z)
@@ -178,8 +187,8 @@ void PointCloudFiltering::apply_voxel_filter_and_visualize(
  * Applies Voxel Filter and saves the resulting PCD file to out_pcd_path
 */
 void PointCloudFiltering::apply_voxel_filter_and_save(
-    std::string in_pcd_path,
-    std::string out_pcd_path,
+    const std::string& in_pcd_path,
+    const std::string& out_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
     const float& leaf_size_z)
@@ -203,13 +212,14 @@ void PointCloudFiltering::apply_voxel_filter_and_save(
     writer.write(out_pcd_path, cloud_voxelized, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
 }
 
-
-
-void PointCloudFiltering::apply_radial_filter_and_save
-        (std::string in_pcd_path,
-        std::string out_pcd_path,
-        float radius,
-        float min_neighbour)
+/**
+ * Applies radial filter to the point cloud at in_pcd_path and saves it at out_pcd_path
+*/
+void PointCloudFiltering::apply_radial_filter_and_save(
+    const std::string& in_pcd_path,
+    const std::string& out_pcd_path,
+    const float& radius,
+    const float& min_nb_neighbors)
 {
      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
     // Fill in the cloud data
@@ -219,15 +229,19 @@ void PointCloudFiltering::apply_radial_filter_and_save
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_radial_filter(
         cloud,
         radius,
-        min_neighbour);
+        min_nb_neighbors);
 
     pcl::PCDWriter writer;
     writer.write(out_pcd_path, *cloud_filtered);
 }
+
+/**
+ * Applies radial filter to the point cloud at in_pcd_path and visualizes it in PCLVisualizer
+*/
 void PointCloudFiltering::apply_radial_filter_and_visualize(
-    std::string in_pcd_path,
-    float radius,
-    float min_neighbour)
+    const std::string& in_pcd_path,
+    const float& radius,
+    const float& min_nb_neighbors)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
     pcl::PCDReader reader;
@@ -237,7 +251,7 @@ void PointCloudFiltering::apply_radial_filter_and_visualize(
    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_radial_filter(
         cloud,
         radius,
-        min_neighbour);
+        min_nb_neighbors);
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
@@ -250,13 +264,11 @@ void PointCloudFiltering::apply_radial_filter_and_visualize(
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters();
 
-    viewer->setRepresentationToWireframeForAllActors();
-
     while (!viewer->wasStopped())
     {
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
-    
 }
+
 } // namespace dataset_generation
