@@ -28,6 +28,10 @@ void visualize_pcd_and_objects(
 
 int main(int argc, char** argv)
 {
+    /**
+     * Extract objects into individual PCDs. 
+    */
+
     // std::string in_folder_pcd =
     //     "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/pcd";
     
@@ -37,9 +41,6 @@ int main(int argc, char** argv)
     // std::string out_folder_pcd =
     //     "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
 
-    /**
-     * Extract objects into individual PCDs. 
-    */
     std::string in_folder_pcd =
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/pcd";
     
