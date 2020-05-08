@@ -46,23 +46,21 @@ public:
         const float& leaf_size_y,
         const float& leaf_size_z);
     
-    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_pass_filter(
-    pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
-    const float& min_range,
-    const float& max_range);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr remove_ground(
+        pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
+        const float& min_range,
+        const float& max_range);
 
-    void apply_pass_filter_and_visualize(
+    void remove_ground_and_visualize(
         std::string in_pcd_path,
         const float& min_range,
         const float& max_range);
 
-    void apply_pass_filter_and_save(
+    void remove_ground_and_save(
         std::string in_pcd_path,
         std::string out_pcd_path,
         const float& min_range,
         const float& max_range);
-
-    
 };
 
 /**
@@ -104,7 +102,13 @@ pcl::PCLPointCloud2 PointCloudFiltering::apply_voxel_filter(
     return *cloud_voxelized;
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_pass_filter(
+/**
+ * Removes all the points on the ground plane from the input point cloud using the
+ * PassThrough filter. Returns the filtered Point Cloud pointer.
+ * Points that lie between min_range and max_range along the z-axis are KEPT. Everything
+ * else is removed.
+*/
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::remove_ground(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
     const float& min_range,
     const float& max_range)
@@ -117,11 +121,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_pass_filter(
 
     // Create the filtering object
     pcl::PassThrough<pcl::PointXYZ> pass;
-    pass.setInputCloud (in_cloud);
-    pass.setFilterFieldName ("z");
+    pass.setInputCloud(in_cloud);
+    pass.setFilterFieldName("z");
     pass.setFilterLimits (min_range, max_range);
-    //pass.setFilterLimitsNegative (true);
-    pass.filter (*cloud_filtered);
+    pass.filter(*cloud_filtered);
 
     std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height
          << " data points (" << pcl::getFieldsList (*cloud_filtered) << ")." << std::endl;
@@ -204,18 +207,22 @@ void PointCloudFiltering::apply_voxel_filter_and_save(
     writer.write(out_pcd_path, cloud_voxelized, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
 }
 
-void PointCloudFiltering::apply_pass_filter_and_save(
+/**
+ * Takes in_pcd_path to PCD file, removes ground and saves it into a PCD file at out_pcd_path
+*/
+void PointCloudFiltering::remove_ground_and_save(
     std::string in_pcd_path,
     std::string out_pcd_path,
     const float& min_range,
     const float& max_range)
 {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> ());
+
     // Fill in the cloud data
     pcl::PCDReader reader;
     reader.read(in_pcd_path, *cloud);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_pass_filter(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = remove_ground(
         cloud,
         min_range,
         max_range);
@@ -224,7 +231,10 @@ void PointCloudFiltering::apply_pass_filter_and_save(
     writer.write(out_pcd_path, *cloud_filtered);
 }
 
-void PointCloudFiltering::apply_pass_filter_and_visualize(
+/**
+ * Takes in_pcd_path to PCD file, removes ground and visualizes using PCLVisualizer. Use for debugging.
+*/
+void PointCloudFiltering::remove_ground_and_visualize(
     std::string in_pcd_path,
     const float& min_range,
     const float& max_range)
@@ -234,7 +244,7 @@ void PointCloudFiltering::apply_pass_filter_and_visualize(
     reader.read(in_pcd_path, *cloud);
     
     // Fill in the cloud data
-   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = apply_pass_filter(
+   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered = remove_ground(
         cloud,
         min_range,
         max_range);
@@ -250,14 +260,11 @@ void PointCloudFiltering::apply_pass_filter_and_visualize(
     viewer->addCoordinateSystem(1.0);
     viewer->initCameraParameters();
 
-    viewer->setRepresentationToWireframeForAllActors();
-
-    while (!viewer->wasStopped())
+    while(!viewer->wasStopped())
     {
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
-    
 }
 
 } // namespace dataset_generation
