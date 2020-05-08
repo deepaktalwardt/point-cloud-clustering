@@ -5,12 +5,10 @@
 #include <string>
 #include <sstream>
 
-#include <pcl/ModelCoefficients.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/io.h>
 #include <pcl/point_types.h>
-#include <pcl/common/common_headers.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
@@ -51,7 +49,7 @@ PointCloudFiltering::~PointCloudFiltering()
 {}
 
 /*
-This method is a modified version of the VoxelGrid filtering found at: 
+apply_voxel_filter_and_save method is a modified version of the VoxelGrid filtering found at: 
 https://pcl-tutorials.readthedocs.io/en/master/voxel_grid.html?highlight=voxelGrid
 */
 void PointCloudFiltering::apply_voxel_filter_and_visualize(float leaf_size_x, float leaf_size_y, float leaf_size_z)
