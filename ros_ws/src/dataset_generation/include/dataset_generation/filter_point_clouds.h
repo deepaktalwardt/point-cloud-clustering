@@ -73,13 +73,13 @@ public:
         const float& max_range);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr apply_ground_removal_and_visualize(
-        std::string in_pcd_path,
+        const std::string& in_pcd_path,
         const float& min_range,
         const float& max_range);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr apply_ground_removal_and_save(
-        std::string in_pcd_path,
-        std::string out_pcd_path,
+        const std::string& in_pcd_path,
+        const std::string& out_pcd_path,
         const float& min_range,
         const float& max_range);
     
@@ -90,13 +90,13 @@ public:
         const float& std_dev_mul_threshold);
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr apply_statistical_outlier_removal_and_visualize(
-        std::string in_pcd_path,
+        const std::string& in_pcd_path,
         const int& mean_k_value,
         const float& std_dev_mul_threshold);
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr apply_statistical_outlier_removal_and_save(
-        std::string in_pcd_path,
-        std::string out_pcd_path,
+        const std::string& in_pcd_path,
+        const std::string& out_pcd_path,
         const int& mean_k_value,
         const float& std_dev_mul_threshold);
 };
@@ -371,8 +371,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
  * Returns filtered cloud.
 */
 pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_save(
-    std::string in_pcd_path,
-    std::string out_pcd_path,
+    const std::string& in_pcd_path,
+    const std::string& out_pcd_path,
     const float& min_range,
     const float& max_range)
 {
@@ -400,7 +400,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_an
  * Returns filtered cloud.
 */
 pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_visualize(
-    std::string in_pcd_path,
+    const std::string& in_pcd_path,
     const float& min_range,
     const float& max_range)
 {
@@ -475,7 +475,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
  * Returns filtered cloud.
 */
 pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
-    std::string in_pcd_path,
+    const std::string& in_pcd_path,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
 {
@@ -516,8 +516,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
  * Returns filtered cloud.
 */
 pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_save(
-    std::string in_pcd_path,
-    std::string out_pcd_path,
+    const std::string& in_pcd_path,
+    const std::string& out_pcd_path,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
 {
