@@ -67,7 +67,7 @@ public:
     void concatenate_objects_and_save(
         const std::string& in_folder_path,
         const std::string& object_name,
-        const std::string& out_pcd_path);
+        const std::string& out_folder_path);
 
 private:
     std::string in_folder_pcd_;
@@ -485,8 +485,6 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
         }
     }
 
-    
-
     // Visualization while loop
     while (!viewer->wasStopped())
     {
@@ -495,18 +493,18 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
     }
 }
 
-void ExtractPointCloudObjects :: concatenate_objects_and_save(
-                            const std::string& in_folder_path,
-                            const std::string& object_name,
-                            const std::string& out_pcd_path)
+void ExtractPointCloudObjects::concatenate_objects_and_save(
+    const std::string& in_folder_path,
+    const std::string& object_name,
+    const std::string& out_folder_path)
 {
     std::unordered_set<std::string> pcd_fn_set;
     get_files_in_directory(in_folder_path, pcd_fn_set);
 
     // Create a common concatenation object for each PCD file of the detection type
-    pcl::PointCloud<pcl::PointXYZ>cloud_all;
+    pcl::PointCloud<pcl::PointXYZ> cloud_all;
 
-    //Concate the pcd files
+    // Concatenate point clouds
     for (const auto& fn : pcd_fn_set)
     {
         // Only compute if file is of `object_name` type
@@ -520,8 +518,8 @@ void ExtractPointCloudObjects :: concatenate_objects_and_save(
             cloud_all += *cloud_temp;
         }
     }
-    std::string save_path = out_pcd_path + object_name + ".pcd";
-    pcl::io::savePCDFile(save_path,cloud_all);
+    std::string save_path = out_folder_path + "/" + object_name + "_combined.pcd";
+    pcl::io::savePCDFile(save_path, cloud_all);
 }
 
 }   // namespace dataset_generation
