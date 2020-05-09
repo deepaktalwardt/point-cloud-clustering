@@ -415,7 +415,7 @@ void PointCloudFiltering::apply_ground_removal_and_visualize(
  * ********************************************************************************************/
 /**
  * Removes Outliers from the cloud using StatisticalOutlierRemoval returns the filtered cloud. 
- * The number of neighbors to analyze for each point is set by `mean_k_value`. All points who have a 
+ * The number of neighbors to analyze for each point is set by `mean_k_value`. All points that have a 
  * distance larger than the `std_dev_mul_threshold` * standard deviations of the mean distance 
  * to the query point will be marked as outliers and removed.
  * 
@@ -433,7 +433,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
 
     // Create the filtering object
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-    sor.setInputCloud(cloud);
+    sor.setInputCloud(in_cloud);
     sor.setMeanK(mean_k_value);
     sor.setStddevMulThresh(std_dev_mul_threshold);
     sor.filter(*cloud_filtered);
@@ -481,6 +481,10 @@ void PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
     }
 }
 
+/**
+ * Takes in_pcd_path to PCD file, removes outliers using StatisticalOutlierRemoval 
+ * and saves to out_pcd_path. Use for debugging.
+*/
 void PointCloudFiltering::apply_statistical_outlier_removal_and_save(
     std::string in_pcd_path,
     std::string out_pcd_path,
