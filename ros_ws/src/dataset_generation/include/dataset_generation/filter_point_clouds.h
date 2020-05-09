@@ -30,20 +30,20 @@ public:
     ~PointCloudFiltering();
 
     // VoxelGrid Filtering for subsampling
-    pcl::PCLPointCloud2 apply_voxel_filter(
+    pcl::PCLPointCloud2::Ptr apply_voxel_filter(
         pcl::PCLPointCloud2::ConstPtr in_cloud,
         const float& leaf_size_x,
         const float& leaf_size_y,
         const float& leaf_size_z);
 
-    void apply_voxel_filter_and_save(
+    pcl::PCLPointCloud2::Ptr apply_voxel_filter_and_save(
         const std::string& in_pcd_path,
         const std::string& out_pcd_path,
         const float& leaf_size_x,
         const float& leaf_size_y,
         const float& leaf_size_z);
     
-    void apply_voxel_filter_and_visualize(
+    pcl::PCLPointCloud2::Ptr apply_voxel_filter_and_visualize(
         const std::string& in_pcd_path,
         const float& leaf_size_x,
         const float& leaf_size_y,
@@ -55,12 +55,12 @@ public:
         const float& radius,
         const float& min_nb_neighbors);
 
-    void apply_radial_filter_and_visualize(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_radial_filter_and_visualize(
         const std::string& in_pcd_path,
         const float& radius,
         const float& min_nb_neighbors);
 
-    void apply_radial_filter_and_save(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_radial_filter_and_save(
         const std::string& in_pcd_path,
         const std::string& out_pcd_path,
         const float& radius,
@@ -72,12 +72,12 @@ public:
         const float& min_range,
         const float& max_range);
 
-    void apply_ground_removal_and_visualize(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_ground_removal_and_visualize(
         std::string in_pcd_path,
         const float& min_range,
         const float& max_range);
 
-    void apply_ground_removal_and_save(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_ground_removal_and_save(
         std::string in_pcd_path,
         std::string out_pcd_path,
         const float& min_range,
@@ -89,12 +89,12 @@ public:
         const int& mean_k_value,
         const float& std_dev_mul_threshold);
     
-    void apply_statistical_outlier_removal_and_visualize(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_statistical_outlier_removal_and_visualize(
         std::string in_pcd_path,
         const int& mean_k_value,
         const float& std_dev_mul_threshold);
     
-    void apply_statistical_outlier_removal_and_save(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr apply_statistical_outlier_removal_and_save(
         std::string in_pcd_path,
         std::string out_pcd_path,
         const int& mean_k_value,
@@ -120,7 +120,7 @@ PointCloudFiltering::~PointCloudFiltering() = default;
  * This is a modified version of the VoxelGrid filtering found at: 
  * https://pcl-tutorials.readthedocs.io/en/master/voxel_grid.html?highlight=voxelGrid
 */
-pcl::PCLPointCloud2 PointCloudFiltering::apply_voxel_filter(
+pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter(
     pcl::PCLPointCloud2::ConstPtr in_cloud,
     const float& leaf_size_x,
     const float& leaf_size_y,
@@ -140,14 +140,16 @@ pcl::PCLPointCloud2 PointCloudFiltering::apply_voxel_filter(
     std::cerr << "PointCloud after filtering: " << cloud_voxelized->width * cloud_voxelized->height 
        << " data points (" << pcl::getFieldsList(*cloud_voxelized) << ")." << std::endl;
     
-    return *cloud_voxelized;
+    return cloud_voxelized;
 }
 
 
 /**
  * Applies Voxel Filter and visualizes in PCL Visualizer
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_voxel_filter_and_visualize(
+pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_visualize(
     const std::string& in_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
@@ -161,7 +163,7 @@ void PointCloudFiltering::apply_voxel_filter_and_visualize(
     reader.read(in_pcd_path, *cloud_read);
 
     // Apply the filter
-    pcl::PCLPointCloud2 cloud_voxelized = apply_voxel_filter(
+    pcl::PCLPointCloud2::Ptr cloud_voxelized = apply_voxel_filter(
         cloud_read,
         leaf_size_x,
         leaf_size_y,
@@ -169,7 +171,7 @@ void PointCloudFiltering::apply_voxel_filter_and_visualize(
 
     // Convert to pcl::PointCloud<> object to visualize
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_to_visualize(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromPCLPointCloud2(cloud_voxelized, *cloud_to_visualize);
+    pcl::fromPCLPointCloud2(*cloud_voxelized, *cloud_to_visualize);
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
@@ -188,12 +190,16 @@ void PointCloudFiltering::apply_voxel_filter_and_visualize(
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
+
+    return cloud_voxelized;
 }
 
 /**
  * Applies Voxel Filter and saves the resulting PCD file to out_pcd_path
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_voxel_filter_and_save(
+pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& leaf_size_x,
@@ -208,7 +214,7 @@ void PointCloudFiltering::apply_voxel_filter_and_save(
     reader.read(in_pcd_path, *cloud_read);
 
     // Apply the filter
-    pcl::PCLPointCloud2 cloud_voxelized = apply_voxel_filter(
+    pcl::PCLPointCloud2::Ptr cloud_voxelized = apply_voxel_filter(
         cloud_read,
         leaf_size_x,
         leaf_size_y,
@@ -217,6 +223,8 @@ void PointCloudFiltering::apply_voxel_filter_and_save(
     // Write to out_pcd_path
     pcl::PCDWriter writer;
     writer.write(out_pcd_path, cloud_voxelized, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
+
+    return cloud_voxelized;
 }
 
 /***********************************************************************************************
@@ -259,8 +267,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
 
 /**
  * Applies radial filter to the point cloud at in_pcd_path and saves it at out_pcd_path
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_radial_filter_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& radius,
@@ -278,12 +288,16 @@ void PointCloudFiltering::apply_radial_filter_and_save(
 
     pcl::PCDWriter writer;
     writer.write(out_pcd_path, *cloud_filtered);
+
+    return cloud_filtered;
 }
 
 /**
  * Applies radial filter to the point cloud at in_pcd_path and visualizes it in PCLVisualizer
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_radial_filter_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and_visualize(
     const std::string& in_pcd_path,
     const float& radius,
     const float& min_nb_neighbors)
@@ -314,6 +328,8 @@ void PointCloudFiltering::apply_radial_filter_and_visualize(
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
+
+    return cloud_filtered;
 }
 
 /***********************************************************************************************
@@ -351,8 +367,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
 
 /**
  * Takes in_pcd_path to PCD file, removes ground and saves it into a PCD file at out_pcd_path
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_ground_removal_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_save(
     std::string in_pcd_path,
     std::string out_pcd_path,
     const float& min_range,
@@ -371,13 +389,17 @@ void PointCloudFiltering::apply_ground_removal_and_save(
 
     pcl::PCDWriter writer;
     writer.write(out_pcd_path, *cloud_filtered);
+
+    return cloud_filtered;
 }
 
 
 /**
  * Takes in_pcd_path to PCD file, removes ground and visualizes using PCLVisualizer. Use for debugging.
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_ground_removal_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_visualize(
     std::string in_pcd_path,
     const float& min_range,
     const float& max_range)
@@ -408,6 +430,8 @@ void PointCloudFiltering::apply_ground_removal_and_visualize(
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
+
+    return cloud_filtered;
 }
 
 /***********************************************************************************************
@@ -447,8 +471,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
 /**
  * Takes in_pcd_path to PCD file, removes outliers using StatisticalOutlierRemoval 
  * and visualizes using PCLVisualizer. Use for debugging.
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
     std::string in_pcd_path,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
@@ -479,13 +505,17 @@ void PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
         viewer->spinOnce(100);
         std::this_thread::sleep_for(100ms);
     }
+
+    return cloud_filtered;
 }
 
 /**
  * Takes in_pcd_path to PCD file, removes outliers using StatisticalOutlierRemoval 
  * and saves to out_pcd_path. Use for debugging.
+ * 
+ * Returns filtered cloud.
 */
-void PointCloudFiltering::apply_statistical_outlier_removal_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_save(
     std::string in_pcd_path,
     std::string out_pcd_path,
     const int& mean_k_value,
@@ -504,6 +534,8 @@ void PointCloudFiltering::apply_statistical_outlier_removal_and_save(
 
     pcl::PCDWriter writer;
     writer.write(out_pcd_path, *cloud_filtered);
+
+    return cloud_filtered;
 }
 
 } // namespace dataset_generation
