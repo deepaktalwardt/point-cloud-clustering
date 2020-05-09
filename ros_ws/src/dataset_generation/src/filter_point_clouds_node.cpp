@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "dataset_generation/filter_point_clouds.h"
+#include "dataset_generation/process_point_clouds.h"
 
 int main()
 {
@@ -18,7 +18,7 @@ int main()
     std::string in_pcd_file =
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_pcd/Hatchback_combined.pcd";
 
-    dataset_generation::PointCloudFiltering pcf;
+    dataset_generation::PointCloudProcessing pcp;
 
     // pcf.apply_voxel_filter_and_visualize(in_pcd_file, 0.05, 0.05, 0.05);
     // pcf.apply_voxel_filter_and_save(in_pcd_file, out_pcd_file, 0.05, 0.05, 0.05);
@@ -29,5 +29,5 @@ int main()
     // pcf.apply_ground_removal_and_visualize(in_pcd_file, 0.1, 2);
     // pcf.apply_pass_filter_and_save(in_pcd_file, out_pcd_file,0.15,2);
 
-    pcf.apply_statistical_outlier_removal_and_visualize(in_pcd_file, 100, 0.8);
+    pcp.apply_statistical_outlier_removal_and_visualize(in_pcd_file, 100, 0.8);
 }

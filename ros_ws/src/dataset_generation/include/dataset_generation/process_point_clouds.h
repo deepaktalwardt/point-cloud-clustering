@@ -22,12 +22,12 @@ using namespace std::literals::chrono_literals;
 namespace dataset_generation
 {
 
-class PointCloudFiltering
+class PointCloudProcessing
 {
 public:
-    PointCloudFiltering();
+    PointCloudProcessing();
 
-    ~PointCloudFiltering();
+    ~PointCloudProcessing();
 
     // VoxelGrid Filtering for subsampling
     pcl::PCLPointCloud2::Ptr apply_voxel_filter(
@@ -104,12 +104,12 @@ public:
 /**
  * Default Constructor
 */
-PointCloudFiltering::PointCloudFiltering() = default;
+PointCloudProcessing::PointCloudProcessing() = default;
 
 /**
  * Default Destructor
 */
-PointCloudFiltering::~PointCloudFiltering() = default;
+PointCloudProcessing::~PointCloudProcessing() = default;
 
 /***********************************************************************************************
  * VoxelGrid Filtering
@@ -120,7 +120,7 @@ PointCloudFiltering::~PointCloudFiltering() = default;
  * This is a modified version of the VoxelGrid filtering found at: 
  * https://pcl-tutorials.readthedocs.io/en/master/voxel_grid.html?highlight=voxelGrid
 */
-pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter(
+pcl::PCLPointCloud2::Ptr PointCloudProcessing::apply_voxel_filter(
     pcl::PCLPointCloud2::ConstPtr in_cloud,
     const float& leaf_size_x,
     const float& leaf_size_y,
@@ -149,7 +149,7 @@ pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter(
  * 
  * Returns filtered cloud.
 */
-pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_visualize(
+pcl::PCLPointCloud2::Ptr PointCloudProcessing::apply_voxel_filter_and_visualize(
     const std::string& in_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
@@ -199,7 +199,7 @@ pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_visualize(
  * 
  * Returns filtered cloud.
 */
-pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_save(
+pcl::PCLPointCloud2::Ptr PointCloudProcessing::apply_voxel_filter_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& leaf_size_x,
@@ -237,7 +237,7 @@ pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_save(
  * It will remove points from a PointCloud that do not have a given number of neighbors within a 
  * specific radius from their location.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_radial_filter(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
     const float& radius,
     const float& min_nb_neighbors)
@@ -270,7 +270,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_radial_filter_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& radius,
@@ -297,7 +297,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_radial_filter_and_visualize(
     const std::string& in_pcd_path,
     const float& radius,
     const float& min_nb_neighbors)
@@ -341,7 +341,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and
  * Points that lie between min_range and max_range along the z-axis are KEPT. Everything
  * else is removed.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_ground_removal(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
     const float& min_range,
     const float& max_range)
@@ -370,7 +370,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_ground_removal_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& min_range,
@@ -399,7 +399,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_an
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_ground_removal_and_visualize(
     const std::string& in_pcd_path,
     const float& min_range,
     const float& max_range)
@@ -445,7 +445,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_an
  * 
  * Explanation available here: https://pcl-tutorials.readthedocs.io/en/master/statistical_outlier.html
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outlier_removal(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
@@ -474,7 +474,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outlier_removal_and_visualize(
     const std::string& in_pcd_path,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
@@ -515,7 +515,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outlier_removal_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const int& mean_k_value,
