@@ -29,6 +29,9 @@ find_package(PCL 1.7 REQUIRED COMPONENTS
   io
   visualization
   filters
+  kdtree
+  features
+  surface
 )
 
 ## System dependencies are found with CMake's conventions

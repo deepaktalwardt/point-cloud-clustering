@@ -6,6 +6,7 @@
 
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_io.h>
 #include <pcl/common/io.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
@@ -13,10 +14,16 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+#include "dataset_generation/json.hpp"
+
+using json = nlohmann::json;
 using namespace std::literals::chrono_literals;
 
 namespace dataset_generation
@@ -99,6 +106,12 @@ public:
         const std::string& out_pcd_path,
         const int& mean_k_value,
         const float& std_dev_mul_threshold);
+    
+    // Conversion of Clouds to mesh
+    void convert_point_cloud_to_mesh(
+        const std::string& in_pcd_path,
+        const std::string& out_vtk_path,
+        const json& options);
 };
 
 /**
@@ -536,6 +549,62 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outl
     writer.write(out_pcd_path, *cloud_filtered);
 
     return cloud_filtered;
+}
+
+/***********************************************************************************************
+ * Converting point clouds to meshes
+ * ********************************************************************************************/
+void PointCloudProcessing::convert_point_cloud_to_mesh(
+    const std::string& in_pcd_path,
+    const std::string& out_vtk_path,
+    const json& options)
+{
+    // Load input file into a PointCloud<PointXYZ> 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 cloud_blob;
+    pcl::io::loadPCDFile(in_pcd_path, cloud_blob);
+    pcl::fromPCLPointCloud2(cloud_blob, *cloud);
+
+    // Normals Estimation
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(cloud);
+    n.setInputCloud(cloud);
+    n.setSearchMethod(tree);
+    n.setKSearch(options["k_search"]);
+    n.compute(*normals);
+
+    // Concatenate normal fields to the cloud
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
+
+    // Create Search tree
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud(cloud_with_normals);
+
+    // Initialize Greedy Projection Triangulation
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
+
+    // Set the maximum distance between connected points (maximum edge length)
+    gp3.setSearchRadius(options["search_radius"]);
+
+    // Set other parameters
+    gp3.setMu(options["mu"]);
+    gp3.setMaximumNearestNeighbors(options["max_nearest_neighbors"]);
+    gp3.setMaximumSurfaceAngle(options["max_surface_angle"]); // 45 degrees
+    gp3.setMinimumAngle(options["min_surface_angle"]); // 10 degrees
+    gp3.setMaximumAngle(options["max_angle"]); // 120 degrees
+    gp3.setNormalConsistency(options["normal_consistency"]);
+
+    // Get result
+    gp3.setInputCloud(cloud_with_normals);
+    gp3.setSearchMethod(tree2);
+    gp3.reconstruct(triangles);
+
+    // Save mesh to vtk file
+    pcl::io::saveVTKFile(out_vtk_path, triangles);
 }
 
 } // namespace dataset_generation
