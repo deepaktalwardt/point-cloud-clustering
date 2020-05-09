@@ -48,14 +48,14 @@ int main(int argc, char** argv)
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/detections_3d";
 
     std::string out_folder_pcd =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_10_transformed";
 
     dataset_generation::ExtractPointCloudObjects epco(
         in_folder_pcd,
         in_folder_dets3d,
         out_folder_pcd);
     
-    int min_nb_points_threshold = 100;
+    int min_nb_points_threshold = 10;
     epco.extract_objects_from_all_pcds(min_nb_points_threshold);
 
     std::cout << "<======== Objects Extracted =========>" << std::endl;
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
      * Combine individual objects into concatenated PCDs
     */
     std::string combined_pcds_folder = 
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_pcd";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_10_pcd";
     
     std::vector<std::string> objects = {"Jeep", "Hatchback", "Sedan", "SchoolBus", "SUV"};
     for (const std::string& object : objects)

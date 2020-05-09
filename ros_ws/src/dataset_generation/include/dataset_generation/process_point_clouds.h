@@ -6,6 +6,7 @@
 
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_io.h>
 #include <pcl/common/io.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
@@ -13,21 +14,27 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+#include "dataset_generation/json.hpp"
+
+using json = nlohmann::json;
 using namespace std::literals::chrono_literals;
 
 namespace dataset_generation
 {
 
-class PointCloudFiltering
+class PointCloudProcessing
 {
 public:
-    PointCloudFiltering();
+    PointCloudProcessing();
 
-    ~PointCloudFiltering();
+    ~PointCloudProcessing();
 
     // VoxelGrid Filtering for subsampling
     pcl::PCLPointCloud2::Ptr apply_voxel_filter(
@@ -99,17 +106,23 @@ public:
         const std::string& out_pcd_path,
         const int& mean_k_value,
         const float& std_dev_mul_threshold);
+    
+    // Conversion of Clouds to mesh
+    void convert_point_cloud_to_mesh(
+        const std::string& in_pcd_path,
+        const std::string& out_vtk_path,
+        const json& options);
 };
 
 /**
  * Default Constructor
 */
-PointCloudFiltering::PointCloudFiltering() = default;
+PointCloudProcessing::PointCloudProcessing() = default;
 
 /**
  * Default Destructor
 */
-PointCloudFiltering::~PointCloudFiltering() = default;
+PointCloudProcessing::~PointCloudProcessing() = default;
 
 /***********************************************************************************************
  * VoxelGrid Filtering
@@ -120,7 +133,7 @@ PointCloudFiltering::~PointCloudFiltering() = default;
  * This is a modified version of the VoxelGrid filtering found at: 
  * https://pcl-tutorials.readthedocs.io/en/master/voxel_grid.html?highlight=voxelGrid
 */
-pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter(
+pcl::PCLPointCloud2::Ptr PointCloudProcessing::apply_voxel_filter(
     pcl::PCLPointCloud2::ConstPtr in_cloud,
     const float& leaf_size_x,
     const float& leaf_size_y,
@@ -149,7 +162,7 @@ pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter(
  * 
  * Returns filtered cloud.
 */
-pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_visualize(
+pcl::PCLPointCloud2::Ptr PointCloudProcessing::apply_voxel_filter_and_visualize(
     const std::string& in_pcd_path,
     const float& leaf_size_x,
     const float& leaf_size_y,
@@ -199,7 +212,7 @@ pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_visualize(
  * 
  * Returns filtered cloud.
 */
-pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_save(
+pcl::PCLPointCloud2::Ptr PointCloudProcessing::apply_voxel_filter_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& leaf_size_x,
@@ -237,7 +250,7 @@ pcl::PCLPointCloud2::Ptr PointCloudFiltering::apply_voxel_filter_and_save(
  * It will remove points from a PointCloud that do not have a given number of neighbors within a 
  * specific radius from their location.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_radial_filter(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
     const float& radius,
     const float& min_nb_neighbors)
@@ -270,7 +283,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter(
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_radial_filter_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& radius,
@@ -297,7 +310,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_radial_filter_and_visualize(
     const std::string& in_pcd_path,
     const float& radius,
     const float& min_nb_neighbors)
@@ -341,7 +354,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_radial_filter_and
  * Points that lie between min_range and max_range along the z-axis are KEPT. Everything
  * else is removed.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_ground_removal(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
     const float& min_range,
     const float& max_range)
@@ -370,7 +383,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal(
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_ground_removal_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const float& min_range,
@@ -399,7 +412,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_an
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_ground_removal_and_visualize(
     const std::string& in_pcd_path,
     const float& min_range,
     const float& max_range)
@@ -445,7 +458,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_ground_removal_an
  * 
  * Explanation available here: https://pcl-tutorials.readthedocs.io/en/master/statistical_outlier.html
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outlier_removal(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr in_cloud,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
@@ -474,7 +487,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_visualize(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outlier_removal_and_visualize(
     const std::string& in_pcd_path,
     const int& mean_k_value,
     const float& std_dev_mul_threshold)
@@ -515,7 +528,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
  * 
  * Returns filtered cloud.
 */
-pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outlier_removal_and_save(
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudProcessing::apply_statistical_outlier_removal_and_save(
     const std::string& in_pcd_path,
     const std::string& out_pcd_path,
     const int& mean_k_value,
@@ -536,6 +549,62 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudFiltering::apply_statistical_outli
     writer.write(out_pcd_path, *cloud_filtered);
 
     return cloud_filtered;
+}
+
+/***********************************************************************************************
+ * Converting point clouds to meshes
+ * ********************************************************************************************/
+void PointCloudProcessing::convert_point_cloud_to_mesh(
+    const std::string& in_pcd_path,
+    const std::string& out_vtk_path,
+    const json& options)
+{
+    // Load input file into a PointCloud<PointXYZ> 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 cloud_blob;
+    pcl::io::loadPCDFile(in_pcd_path, cloud_blob);
+    pcl::fromPCLPointCloud2(cloud_blob, *cloud);
+
+    // Normals Estimation
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(cloud);
+    n.setInputCloud(cloud);
+    n.setSearchMethod(tree);
+    n.setKSearch(options["k_search"]);
+    n.compute(*normals);
+
+    // Concatenate normal fields to the cloud
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
+
+    // Create Search tree
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud(cloud_with_normals);
+
+    // Initialize Greedy Projection Triangulation
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
+
+    // Set the maximum distance between connected points (maximum edge length)
+    gp3.setSearchRadius(options["search_radius"]);
+
+    // Set other parameters
+    gp3.setMu(options["mu"]);
+    gp3.setMaximumNearestNeighbors(options["max_nearest_neighbors"]);
+    gp3.setMaximumSurfaceAngle(options["max_surface_angle"]); // 45 degrees
+    gp3.setMinimumAngle(options["min_surface_angle"]); // 10 degrees
+    gp3.setMaximumAngle(options["max_angle"]); // 120 degrees
+    gp3.setNormalConsistency(options["normal_consistency"]);
+
+    // Get result
+    gp3.setInputCloud(cloud_with_normals);
+    gp3.setSearchMethod(tree2);
+    gp3.reconstruct(triangles);
+
+    // Save mesh to vtk file
+    pcl::io::saveVTKFile(out_vtk_path, triangles);
 }
 
 } // namespace dataset_generation
