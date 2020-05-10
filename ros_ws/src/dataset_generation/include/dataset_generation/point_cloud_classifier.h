@@ -48,6 +48,11 @@ public:
     
     json predict_all_with_ndt(
         const json& options);
+    
+    json predict_with_ndt(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
+    const std::string& true_class,
+    const json& icp_options);
 
 private:
     // Private class variables
@@ -166,7 +171,7 @@ json PointCloudClassifier::predict_all(
         }
         else if (testing_method == "ndt")
         {
-            // Add NDT method here
+            testing_results[fn] = predict_with_ndt(test_cloud, true_class, options);
         }
         else
         {
@@ -249,4 +254,49 @@ json PointCloudClassifier::predict_with_icp(
     return result;
 }
 
+
+/***************************************
+ * NDT Related functions
+ * ************************************/
+
+json PointCloudClassifier::predict_with_ndt(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
+    const std::string& true_class,
+    const json& options)
+{
+    // Create return JSON
+    json result;
+    result["tests"] = {};
+    result["true_label"] = true_class;
+
+    // Create NDT object
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> ndt;
+
+    // Apply NDT Paramaters
+    ndt.setTransformationEpsilon (0.01);
+    ndt.setStepSize (0.1);
+    ndt.setInputTarget(test_cloud);
+    ndt.setResolution (1.0);
+    ndt.setMaximumIterations (50);
+    
+
+    for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
+    {
+        ndt.setInputSource(it->second);
+
+        pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
+        ndt.align(aligned_cloud_temp);
+
+        json single_result;
+        single_result["has_converged"] = ndt.hasConverged();
+        single_result["fitness_score"] = ndt.getFitnessScore();
+
+        result["tests"][it->first] = single_result;
+    }
+    return result;
+}
+
 } // namespace dataset_generation
+
+
+// namespace dataset_generation
