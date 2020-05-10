@@ -124,6 +124,7 @@ json PointCloudClassifier::predict_all(
 {
     // Initialize testing results
     json testing_results;
+    testing_results["testing_method"] = testing_method;
     int count_tested = 0;
 
     // Iterate over all testing files
