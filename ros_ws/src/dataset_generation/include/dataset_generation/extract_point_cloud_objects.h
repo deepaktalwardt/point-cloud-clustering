@@ -108,7 +108,8 @@ void get_files_in_directory(
     class stat st;
 
     dir = opendir(directory.c_str());
-    while ((ent = readdir(dir)) != NULL) {
+    while ((ent = readdir(dir)) != NULL)
+    {
         const std::string file_name = ent->d_name;
         const std::string full_file_name = directory + "/" + file_name;
 
