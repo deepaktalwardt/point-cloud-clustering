@@ -8,6 +8,9 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/io.h>
 #include <pcl/point_types.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+#include <pcl/registration/ndt.h>
 #include <pcl/common/common_headers.h>
 
 #include "dataset_generation/extract_point_cloud_objects.h"
@@ -35,6 +38,16 @@ public:
         const std::string& true_class,
         const json& icp_options);
     
+    json predict_with_icp_non_linear(
+        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
+        const std::string& true_class,
+        const json& icp_options);
+    
+    json predict_with_ndt(
+        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
+        const std::string& true_class,
+        const json& icp_options);
+    
     // Prediction of all 
     json predict_all(
         const std::string& testing_method,
@@ -48,11 +61,6 @@ public:
     
     json predict_all_with_ndt(
         const json& options);
-    
-    json predict_with_ndt(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
-    const std::string& true_class,
-    const json& icp_options);
 
 private:
     // Private class variables
@@ -167,7 +175,7 @@ json PointCloudClassifier::predict_all(
         }
         else if (testing_method == "icp_nl")
         {
-            // Add ICP NL method here
+            testing_results[fn] = predict_with_icp_non_linear(test_cloud, true_class, options);
         }
         else if (testing_method == "ndt")
         {
@@ -230,11 +238,44 @@ json PointCloudClassifier::predict_with_icp(
     // Create ICP object
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
     
-    if (options["non_linear"])
+    // Apply ICP Paramaters
+    icp.setInputTarget(test_cloud);
+    icp.setTransformationEpsilon(options["transformation_epsilon"]);
+    icp.setMaxCorrespondenceDistance(options["max_correspondence_distance"]);
+    icp.setMaximumIterations(options["maximum_iterations"]);
+    icp.setEuclideanFitnessEpsilon(options["euclidean_fitness_epsilon"]);
+    icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+
+    for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
     {
-      std::cout << "Using Iterative Closest Point Non Linear" << std::endl;
-      icp.reset (new pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> ());
+        icp.setInputSource(it->second);
+
+        pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
+        icp.align(aligned_cloud_temp);
+
+        json single_result;
+        single_result["has_converged"] = icp.hasConverged();
+        single_result["fitness_score"] = icp.getFitnessScore();
+
+        result["tests"][it->first] = single_result;
     }
+    return result;
+}
+
+
+json PointCloudClassifier::predict_with_icp_non_linear(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
+    const std::string& true_class,
+    const json& options)
+{
+    // Create return JSON
+    json result;
+    result["tests"] = {};
+    result["true_label"] = true_class;
+
+    // Create ICP object
+    pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
+    
     // Apply ICP Paramaters
     icp.setInputTarget(test_cloud);
     icp.setTransformationEpsilon(options["transformation_epsilon"]);
@@ -279,9 +320,9 @@ json PointCloudClassifier::predict_with_ndt(
 
     // Apply NDT Paramaters
     ndt.setTransformationEpsilon (options["transformation_epsilon"]);
-    ndt.setStepSize (options["step_size"]);
+    ndt.setStepSize(options["step_size"]);
     ndt.setInputTarget(test_cloud);
-    ndt.setResolution (options["set_resolution"]);
+    ndt.setResolution(options["set_resolution"]);
     ndt.setMaximumIterations(options["maximum_iterations"]);
     
 
