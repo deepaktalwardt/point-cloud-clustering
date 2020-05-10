@@ -273,11 +273,11 @@ json PointCloudClassifier::predict_with_ndt(
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> ndt;
 
     // Apply NDT Paramaters
-    ndt.setTransformationEpsilon (0.01);
-    ndt.setStepSize (0.1);
+    ndt.setTransformationEpsilon (options["transformation_epsilon"]);
+    ndt.setStepSize (options["step_size"]);
     ndt.setInputTarget(test_cloud);
-    ndt.setResolution (1.0);
-    ndt.setMaximumIterations (50);
+    ndt.setResolution (options["set_resolution"]);
+    ndt.setMaximumIterations(options["maximum_iterations"]);
     
 
     for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
