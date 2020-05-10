@@ -229,7 +229,12 @@ json PointCloudClassifier::predict_with_icp(
 
     // Create ICP object
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-
+    
+    if (options["non_linear"])
+    {
+      std::cout << "Using Iterative Closest Point Non Linear" << std::endl;
+      icp.reset (new pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> ());
+    }
     // Apply ICP Paramaters
     icp.setInputTarget(test_cloud);
     icp.setTransformationEpsilon(options["transformation_epsilon"]);

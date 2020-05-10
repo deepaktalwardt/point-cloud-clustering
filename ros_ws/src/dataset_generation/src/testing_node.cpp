@@ -27,6 +27,7 @@ int main(int argc, char** argv)
     icp_options["maximum_iterations"] = 2;
     icp_options["euclidean_fitness_epsilon"] = 0.01;
     icp_options["RANSAC_outlier_rejection_threshold"] = 1.5;
+    icp_options["non_linear"] =0;
     
     json results_icp = pcc.predict_all_with_icp(icp_options);
     std::cout << std::setw(4) << results_icp << std::endl; 
@@ -42,6 +43,7 @@ int main(int argc, char** argv)
     ndt.setResolution (options["set_resolution"]);
     ndt.setMaximumIterations(options["maximum_iterations"]);
     
+    //NDT
     json ndt_options;
     ndt_options["transformation_epsilon"] = 1e-2;
     ndt_options["maximum_iterations"] = 35;
@@ -55,6 +57,23 @@ int main(int argc, char** argv)
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_ndt.json";
     std::ofstream out_json_stream(out_json_ndt_path);
     out_json_stream << std::setw(4) << results_ndt << std::endl;
+    
+    //ICP Nonlinear
+    json icp_options;
+    icp_options["transformation_epsilon"] = 1e-4;
+    icp_options["max_correspondence_distance"] = 0.1;
+    icp_options["maximum_iterations"] = 2;
+    icp_options["euclidean_fitness_epsilon"] = 0.01;
+    icp_options["RANSAC_outlier_rejection_threshold"] = 1.5;
+    icp_options["non_linear"] =1;
+    
+    json results_icp_nl = pcc.predict_all_with_icp(icp_options);
+    std::cout << std::setw(4) << results_icp_nl << std::endl;
+
+    std::string out_json_icp_nl_path =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_icp_nl.json";
+    std::ofstream out_json_stream(out_json_icp_nl_path);
+    out_json_stream << std::setw(4) << results_icp_nl << std::endl;
 
     return 0;
 }
