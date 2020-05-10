@@ -35,6 +35,26 @@ int main(int argc, char** argv)
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_icp1.json";
     std::ofstream out_json_stream(out_json_path);
     out_json_stream << std::setw(4) << results_icp << std::endl;
+    
+    ndt.setTransformationEpsilon (options["transformation_epsilon"]);
+    ndt.setStepSize (options["step_size"]);
+    ndt.setInputTarget(test_cloud);
+    ndt.setResolution (options["set_resolution"]);
+    ndt.setMaximumIterations(options["maximum_iterations"]);
+    
+    json ndt_options;
+    ndt_options["transformation_epsilon"] = 1e-2;
+    ndt_options["maximum_iterations"] = 35;
+    ndt_options["step_size"] = 0.1;
+    ndt_options["set_resolution"] = 1.0;
+    
+    json results_ndt = pcc.predict_all_with_ndt(ndt_options);
+    std::cout << std::setw(4) << results_ndt << std::endl;
+
+    std::string out_json_ndt_path =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_ndt.json";
+    std::ofstream out_json_stream(out_json_ndt_path);
+    out_json_stream << std::setw(4) << results_ndt << std::endl;
 
     return 0;
 }

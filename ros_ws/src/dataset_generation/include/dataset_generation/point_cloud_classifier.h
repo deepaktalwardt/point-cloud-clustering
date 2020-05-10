@@ -270,7 +270,7 @@ json PointCloudClassifier::predict_with_ndt(
     result["true_label"] = true_class;
 
     // Create NDT object
-    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> ndt;
+    pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt;
 
     // Apply NDT Paramaters
     ndt.setTransformationEpsilon (options["transformation_epsilon"]);
@@ -299,4 +299,3 @@ json PointCloudClassifier::predict_with_ndt(
 } // namespace dataset_generation
 
 
-// namespace dataset_generation
