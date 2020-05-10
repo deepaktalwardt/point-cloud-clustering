@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <ostream>
 
 #include "dataset_generation/extract_point_cloud_objects.h"
 #include "dataset_generation/point_cloud_classifier.h"
@@ -29,6 +30,11 @@ int main(int argc, char** argv)
     
     json results_icp = pcc.predict_all_with_icp(icp_options);
     std::cout << std::setw(4) << results_icp << std::endl; 
-       
+
+    std::string out_json_path =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_icp1.json";
+    std::ofstream out_json_stream(out_json_path);
+    out_json_stream << std::setw(4) << results_icp << std::endl;
+
     return 0;
 }
