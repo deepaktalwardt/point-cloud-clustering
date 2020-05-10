@@ -153,6 +153,9 @@ include_directories(
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+##################################################
+## Declare Executables
+##################################################
 add_executable(extract_point_cloud_objects_node 
   src/extract_point_cloud_objects_node.cpp
 )
@@ -165,6 +168,13 @@ add_executable(visualize_objects
   src/visualize_objects.cpp
 )
 
+add_executable(testing_node 
+  src/testing_node.cpp
+)
+
+##################################################
+## Dependencies
+##################################################
 add_dependencies(extract_point_cloud_objects_node
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
@@ -180,6 +190,14 @@ add_dependencies(visualize_objects
   ${catkin_EXPORTED_TARGETS}
 )
 
+add_dependencies(testing_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+
+##################################################
+## Target link libraries
+##################################################
 target_link_libraries(extract_point_cloud_objects_node
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
@@ -193,6 +211,12 @@ target_link_libraries(filter_point_clouds_node
 )
 
 target_link_libraries(visualize_objects
+  ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Eigen_LIBRARIES}
+)
+
+target_link_libraries(testing_node
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
   ${Eigen_LIBRARIES}
