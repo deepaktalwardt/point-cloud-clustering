@@ -14,14 +14,21 @@ int main(int argc, char** argv)
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/source_object_clouds";
     
     std::string in_folder_testset = 
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_10_transformed";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/sample_test_set";
 
     dataset_generation::PointCloudClassifier pcc(
         in_folder_sources,
         in_folder_testset);
+
+    json icp_options;
+    icp_options["transformation_epsilon"] = 1e-4;
+    icp_options["max_correspondence_distance"] = 0.1;
+    icp_options["maximum_iterations"] = 2;
+    icp_options["euclidean_fitness_epsilon"] = 0.01;
+    icp_options["RANSAC_outlier_rejection_threshold"] = 1.5;
     
-    // json results_icp = pcc.predict_all_using_icp();
-    // json results_ndt = pcc.predict_all_using_ndt();
-    
+    json results_icp = pcc.predict_all_with_icp(icp_options);
+    std::cout << std::setw(4) << results_icp << std::endl; 
+       
     return 0;
 }

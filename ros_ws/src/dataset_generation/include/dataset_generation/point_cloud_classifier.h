@@ -38,9 +38,12 @@ public:
     // Prediction of all 
     json predict_all(
         const std::string& testing_method,
-        const json& options)
+        const json& options);
 
     json predict_all_with_icp(
+        const json& options);
+    
+    json predict_all_with_icp_non_linear(
         const json& options);
     
     json predict_all_with_ndt(
@@ -52,7 +55,7 @@ private:
     std::string in_folder_testset_;
     std::vector<std::string> classes_;
 
-    std::unordered_map<std::string, pcl::PCLPointCloud2> source_point_clouds_;
+    std::unordered_map<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr> source_point_clouds_;
     std::unordered_set<std::string> test_set_fn_;
 
     // Private functions
@@ -104,8 +107,9 @@ void PointCloudClassifier::load_source_point_clouds_()
                 std::string pcd_file_path = in_folder_sources_ + "/" + fn;
                 pcl::PCLPointCloud2 cloud_blob;
                 pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
-
-                source_point_clouds_[obj_class] = cloud_blob;
+                pcl::PointCloud<pcl::PointXYZ>::Ptr source_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+                pcl::fromPCLPointCloud2(cloud_blob, *source_cloud);
+                source_point_clouds_[obj_class] = source_cloud;
             }
         }
     }
@@ -210,19 +214,38 @@ json PointCloudClassifier::predict_all_with_ndt(
 json PointCloudClassifier::predict_with_icp(
     pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
     const std::string& true_class,
-    const json& icp_options)
+    const json& options)
 {
+    // Create return JSON
+    json result;
+    result["tests"] = {};
+    result["true_label"] = true_class;
+
     // Create ICP object
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 
     // Apply ICP Paramaters
-    icp.setInputTarget(cloud_without_ground);
-    icp.setTransformationEpsilon(1e-10);
-    icp.setMaxCorrespondenceDistance(0.1);
-    icp.setMaximumIterations(50);
-    icp.setEuclideanFitnessEpsilon(1);
-    icp.setRANSACOutlierRejectionThreshold(1.5);
-    
+    icp.setInputTarget(test_cloud);
+    icp.setTransformationEpsilon(options["transformation_epsilon"]);
+    icp.setMaxCorrespondenceDistance(options["max_correspondence_distance"]);
+    icp.setMaximumIterations(options["maximum_iterations"]);
+    icp.setEuclideanFitnessEpsilon(options["euclidean_fitness_epsilon"]);
+    icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+
+    for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
+    {
+        icp.setInputSource(it->second);
+
+        pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
+        icp.align(aligned_cloud_temp);
+
+        json single_result;
+        single_result["has_converged"] = icp.hasConverged();
+        single_result["fitness_score"] = icp.getFitnessScore();
+
+        result["tests"][it->first] = single_result;
+    }
+    return result;
 }
 
 } // namespace dataset_generation
