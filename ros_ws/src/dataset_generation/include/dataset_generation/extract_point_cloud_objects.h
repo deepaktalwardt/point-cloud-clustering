@@ -1,7 +1,7 @@
 #pragma once
 
-#include <dirent.h>
 #include <iostream>
+#include <dirent.h>
 #include <thread>
 #include <string>
 #include <sstream>
@@ -16,11 +16,15 @@
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/impl/crop_box.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+#include <pcl/registration/transforms.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
 #include "dataset_generation/json.hpp"
+#include "dataset_generation/process_point_clouds.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -68,6 +72,13 @@ public:
         const std::string& in_folder_path,
         const std::string& object_name,
         const std::string& out_folder_path);
+    
+    void concatenate_objects_with_icp_and_save(
+        const std::string& in_folder_path,
+        const std::string& object_name,
+        const std::string& object_source_path,
+        const std::string& out_folder_path,
+        const float& score_threshold);
 
 private:
     std::string in_folder_pcd_;
@@ -493,6 +504,7 @@ void ExtractPointCloudObjects::concatenate_objects_and_visualize(
     }
 }
 
+
 void ExtractPointCloudObjects::concatenate_objects_and_save(
     const std::string& in_folder_path,
     const std::string& object_name,
@@ -520,6 +532,99 @@ void ExtractPointCloudObjects::concatenate_objects_and_save(
     }
     std::string save_path = out_folder_path + "/" + object_name + "_combined.pcd";
     pcl::io::savePCDFile(save_path, cloud_all);
+}
+
+
+void ExtractPointCloudObjects::concatenate_objects_with_icp_and_save(
+    const std::string& in_folder_path,
+    const std::string& object_name,
+    const std::string& object_source_path,
+    const std::string& out_folder_path,
+    const float& score_threshold)
+{
+    std::unordered_set<std::string> pcd_fn_set;
+    get_files_in_directory(in_folder_path, pcd_fn_set);
+
+    // Load source cloud
+    pcl::PCLPointCloud2 cloud_source_blob;
+    pcl::io::loadPCDFile(object_source_path, cloud_source_blob);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromPCLPointCloud2(cloud_source_blob, *cloud_source);
+
+    // Create PointCloudProcess object
+    dataset_generation::PointCloudProcessing pcp;
+
+    // Remove ground before concatenation
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_source_without_ground = pcp.apply_ground_removal(
+        cloud_source,
+        0.1,
+        4.0);
+
+    // Create a common concatenation object for each PCD file of the detection type
+    pcl::PointCloud<pcl::PointXYZ> cloud_all;
+
+    // Create ICP or ICP non linear object for use inside loop
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+    // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
+
+    // Initialize counts
+    int count_added = 0, count_not_added = 0;
+
+    // Concatenate point clouds
+    for (const auto& fn : pcd_fn_set)
+    {
+        // Only compute if file is of `object_name` type
+        if (fn.find(object_name) != std::string::npos)
+        {
+            std::string pcd_file_path = in_folder_path + "/" + fn;
+            pcl::PCLPointCloud2 cloud_blob;
+            pcl::io::loadPCDFile(pcd_file_path, cloud_blob);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::fromPCLPointCloud2(cloud_blob, *cloud_temp);
+
+            // Remove ground before concatenation
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_without_ground = pcp.apply_ground_removal(
+                cloud_temp,
+                0.1,
+                4.0);
+            
+            // Using ICP to match source and target clouds
+            icp.setInputSource(cloud_source_without_ground);
+            icp.setInputTarget(cloud_without_ground);
+            icp.setTransformationEpsilon(1e-10);
+            icp.setMaxCorrespondenceDistance(0.1);
+            icp.setMaximumIterations(50);
+            icp.setEuclideanFitnessEpsilon(1);
+            icp.setRANSACOutlierRejectionThreshold(1.5);
+
+            // Align clouds after finding transformation
+            pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
+            icp.align(aligned_cloud_temp);
+
+            std::cout << fn << " has converged?:" << icp.hasConverged() << " score: " <<
+                icp.getFitnessScore() << std::endl;
+
+            // Concatenate to cloud_all
+            if (icp.hasConverged() && icp.getFitnessScore() < score_threshold)
+            {
+                Eigen::Matrix4f target_to_source_transform = icp.getFinalTransformation().inverse();
+
+                pcl::PointCloud<pcl::PointXYZ> cloud_to_add;
+                pcl::transformPointCloud(*cloud_without_ground, cloud_to_add, target_to_source_transform);
+                
+                cloud_all += cloud_to_add;
+                count_added++;
+            }
+            else
+            {
+                count_not_added++;
+            }
+        }
+    }
+    std::string save_path = out_folder_path + "/" + object_name + "_combined.pcd";
+    pcl::io::savePCDFile(save_path, cloud_all);
+
+    std::cout << "Clouds added: " << count_added << ", Clouds not added: " << count_not_added << std::endl;
 }
 
 }   // namespace dataset_generation
