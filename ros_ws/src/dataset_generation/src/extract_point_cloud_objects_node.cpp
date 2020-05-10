@@ -55,24 +55,33 @@ int main(int argc, char** argv)
         in_folder_dets3d,
         out_folder_pcd);
     
-    int min_nb_points_threshold = 10;
-    epco.extract_objects_from_all_pcds(min_nb_points_threshold);
+    // int min_nb_points_threshold = 10;
+    // epco.extract_objects_from_all_pcds(min_nb_points_threshold);
 
-    std::cout << "<======== Objects Extracted =========>" << std::endl;
+    // std::cout << "<======== Objects Extracted =========>" << std::endl;
 
     /**
      * Combine individual objects into concatenated PCDs
     */
     std::string combined_pcds_folder = 
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_10_pcd";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_icp_10_pcd";
     
-    std::vector<std::string> objects = {"Jeep", "Hatchback", "Sedan", "SchoolBus", "SUV"};
+    // std::string source_pcd_Hatchback = 
+    //     "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/source_object_clouds/Hatchback_source.pcd";
+
+    std::string source_pcd_Hatchback = 
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_10_pcd/Hatchback_10_combined.pcd";
+    
+    // std::vector<std::string> objects = {"Jeep", "Hatchback", "Sedan", "SchoolBus", "SUV"};
+    std::vector<std::string> objects = {"Hatchback"};
     for (const std::string& object : objects)
     {
-        epco.concatenate_objects_and_save(
+        epco.concatenate_objects_with_icp_and_save(
             out_folder_pcd,
             object,
-            combined_pcds_folder);
+            source_pcd_Hatchback,
+            combined_pcds_folder,
+            0.2);
         std::cout << "Created combined " << object << " PCD" << std::endl;
     }
 
