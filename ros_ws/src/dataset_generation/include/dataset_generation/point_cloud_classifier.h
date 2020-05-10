@@ -36,17 +36,17 @@ public:
     json predict_with_icp(
         pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
         const std::string& true_class,
-        const json& icp_options);
+        const json& options);
     
     json predict_with_icp_non_linear(
         pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
         const std::string& true_class,
-        const json& icp_options);
+        const json& options);
     
     json predict_with_ndt(
         pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud,
         const std::string& true_class,
-        const json& icp_options);
+        const json& options);
     
     // Prediction of all 
     json predict_all(
