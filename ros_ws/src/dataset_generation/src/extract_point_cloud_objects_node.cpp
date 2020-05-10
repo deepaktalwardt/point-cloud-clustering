@@ -41,49 +41,52 @@ int main(int argc, char** argv)
     // std::string out_folder_pcd =
     //     "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
 
+    // std::string bag_name = "bag6_2020-05-09-19-08-22.bag";
+    std::string bag_name = "testbag1_2020-05-09-19-39-52.bag";
+
     std::string in_folder_pcd =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/pcd";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/pcd";
     
     std::string in_folder_dets3d =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/detections_3d";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/detections_3d";
 
     std::string out_folder_pcd =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/out_10_transformed";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/out_10_transformed";
 
     dataset_generation::ExtractPointCloudObjects epco(
         in_folder_pcd,
         in_folder_dets3d,
         out_folder_pcd);
     
-    // int min_nb_points_threshold = 10;
-    // epco.extract_objects_from_all_pcds(min_nb_points_threshold);
+    int min_nb_points_threshold = 10;
+    epco.extract_objects_from_all_pcds(min_nb_points_threshold);
 
     // std::cout << "<======== Objects Extracted =========>" << std::endl;
 
     /**
      * Combine individual objects into concatenated PCDs
     */
-    std::string combined_pcds_folder = 
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_icp_10_pcd";
+    // std::string combined_pcds_folder = 
+    //     "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_icp_10_pcd";
     
-    // std::string source_pcd_Hatchback = 
-    //     "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/source_object_clouds/Hatchback_source.pcd";
+    // // std::string source_pcd_Hatchback = 
+    // //     "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/source_object_clouds/Hatchback_source.pcd";
 
-    std::string source_pcd_Hatchback = 
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_10_pcd/Hatchback_10_combined.pcd";
+    // std::string source_pcd_Hatchback = 
+    //     "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag5_2020-05-05-15-11-17.bag/combined_objects_10_pcd/Hatchback_10_combined.pcd";
     
-    // std::vector<std::string> objects = {"Jeep", "Hatchback", "Sedan", "SchoolBus", "SUV"};
-    std::vector<std::string> objects = {"Hatchback"};
-    for (const std::string& object : objects)
-    {
-        epco.concatenate_objects_with_icp_and_save(
-            out_folder_pcd,
-            object,
-            source_pcd_Hatchback,
-            combined_pcds_folder,
-            0.2);
-        std::cout << "Created combined " << object << " PCD" << std::endl;
-    }
+    // // std::vector<std::string> objects = {"Jeep", "Hatchback", "Sedan", "SchoolBus", "SUV"};
+    // std::vector<std::string> objects = {"Hatchback"};
+    // for (const std::string& object : objects)
+    // {
+    //     epco.concatenate_objects_with_icp_and_save(
+    //         out_folder_pcd,
+    //         object,
+    //         source_pcd_Hatchback,
+    //         combined_pcds_folder,
+    //         0.2);
+    //     std::cout << "Created combined " << object << " PCD" << std::endl;
+    // }
 
     return 0;
 }
