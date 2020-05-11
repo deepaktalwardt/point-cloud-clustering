@@ -142,6 +142,9 @@ json PointCloudClassifier::predict_all(
 
     int count_tested = 0, count_skipped = 0;
 
+    // Initialize PCP object
+    dataset_generation::PointCloudProcessing pcp;
+
     // Iterate over all testing files
     for (const std::string& fn : test_set_fn_)
     {
@@ -169,8 +172,10 @@ json PointCloudClassifier::predict_all(
         pcl::PCLPointCloud2 cloud_blob;
         pcl::io::loadPCDFile(test_pcd_file_path, cloud_blob);
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromPCLPointCloud2(cloud_blob, *test_cloud);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud_unfiltered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::fromPCLPointCloud2(cloud_blob, *test_cloud_unfiltered);
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud = pcp.apply_ground_removal(test_cloud_unfiltered, 0.2, 2);
 
         // Call the correct function depending on testing_method
         if (testing_method == "icp")
