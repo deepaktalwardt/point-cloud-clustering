@@ -51,17 +51,30 @@ int main(int argc, char** argv)
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/detections_3d";
 
     std::string out_folder_pcd =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/out_10_transformed";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/out_300_transformed";
 
-    dataset_generation::ExtractPointCloudObjects epco(
+    dataset_generation::ExtractPointCloudObjects epco1(
         in_folder_pcd,
         in_folder_dets3d,
         out_folder_pcd);
     
-    int min_nb_points_threshold = 10;
-    epco.extract_objects_from_all_pcds(min_nb_points_threshold);
+    int min_nb_points_threshold = 300;
+    epco1.extract_objects_from_all_pcds(min_nb_points_threshold);
 
-    // std::cout << "<======== Objects Extracted =========>" << std::endl;
+    std::cout << "<======== Objects Extracted 1 =========>" << std::endl;
+
+    out_folder_pcd =
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/" + bag_name + "/out_500_transformed";
+
+    min_nb_points_threshold = 500;
+    dataset_generation::ExtractPointCloudObjects epco2(
+        in_folder_pcd,
+        in_folder_dets3d,
+        out_folder_pcd);
+    
+    epco2.extract_objects_from_all_pcds(min_nb_points_threshold);
+
+    std::cout << "<======== Objects Extracted 2 =========>" << std::endl;
 
     /**
      * Combine individual objects into concatenated PCDs
