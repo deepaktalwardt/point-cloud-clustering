@@ -17,39 +17,42 @@ int main(int argc, char** argv)
     std::string in_folder_testset = 
         "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/out_300_transformed";
 
+    std::vector<std::string> classes = {"Hatchback", "Sedan", "Jeep", "SUV"};
+
     dataset_generation::PointCloudClassifier pcc(
         in_folder_sources,
-        in_folder_testset);
+        in_folder_testset,
+        classes);
 
     // Using ICP with 300 points+
     json icp_options;
     icp_options["transformation_epsilon"] = 1e-9;
-    icp_options["max_correspondence_distance"] = 0.1;
-    icp_options["maximum_iterations"] = 50;
+    icp_options["max_correspondence_distance"] = 0.01;
+    icp_options["maximum_iterations"] = 1;
     icp_options["euclidean_fitness_epsilon"] = 0.001;
-    icp_options["RANSAC_outlier_rejection_threshold"] = 0.2;
+    // icp_options["RANSAC_outlier_rejection_threshold"] = 0.2;
     
     json results_icp = pcc.predict_all_with_icp(icp_options);
     // std::cout << std::setw(4) << results_icp << std::endl; 
 
     std::string out_json_icp_path =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1/test_results_sources_1_300_icp.json";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1_iter7/test_results_sources_1_300_icp.json";
     std::ofstream out_json_icp_stream(out_json_icp_path);
     out_json_icp_stream << std::setw(4) << results_icp << std::endl;
 
     // ICP Nonlinear with 300 points+
     json icp_nl_options;
     icp_nl_options["transformation_epsilon"] = 1e-9;
-    icp_nl_options["max_correspondence_distance"] = 0.1;
-    icp_nl_options["maximum_iterations"] = 50;
+    icp_nl_options["max_correspondence_distance"] = 0.01;
+    icp_nl_options["maximum_iterations"] = 1;
     icp_nl_options["euclidean_fitness_epsilon"] = 0.001;
-    icp_nl_options["RANSAC_outlier_rejection_threshold"] = 0.2;
+    // icp_nl_options["RANSAC_outlier_rejection_threshold"] = 0.2;
     
     json results_icp_nl = pcc.predict_all_with_icp_non_linear(icp_nl_options);
     // std::cout << std::setw(4) << results_icp_nl << std::endl;
 
     std::string out_json_icp_nl_path =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1/test_results_sources_1_300_icp_nl.json";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1_iter7/test_results_sources_1_300_icp_nl.json";
     std::ofstream out_json_icp_nl_stream(out_json_icp_nl_path);
     out_json_icp_nl_stream << std::setw(4) << results_icp_nl << std::endl;
 
@@ -65,32 +68,32 @@ int main(int argc, char** argv)
     // Using ICP with 300 points+
     // json icp_options;
     icp_options["transformation_epsilon"] = 1e-9;
-    icp_options["max_correspondence_distance"] = 0.1;
-    icp_options["maximum_iterations"] = 2;
-    icp_options["euclidean_fitness_epsilon"] = 0.01;
-    icp_options["RANSAC_outlier_rejection_threshold"] = 1.5;
+    icp_options["max_correspondence_distance"] = 0.01;
+    icp_options["maximum_iterations"] = 1;
+    icp_options["euclidean_fitness_epsilon"] = 0.001;
+    // icp_options["RANSAC_outlier_rejection_threshold"] = 0.2;
     
     json results_icp2 = pcc2.predict_all_with_icp(icp_options);
     // std::cout << std::setw(4) << results_icp << std::endl; 
 
     std::string out_json_icp_path2 =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1/test_results_sources_1_500_icp.json";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1_iter7/test_results_sources_1_500_icp.json";
     std::ofstream out_json_icp_stream2(out_json_icp_path2);
     out_json_icp_stream2 << std::setw(4) << results_icp2 << std::endl;
 
     // ICP Nonlinear with 300 points+
     // json icp_nl_options;
     icp_nl_options["transformation_epsilon"] = 1e-9;
-    icp_nl_options["max_correspondence_distance"] = 0.1;
-    icp_nl_options["maximum_iterations"] = 50;
-    icp_nl_options["euclidean_fitness_epsilon"] = 0.01;
-    icp_nl_options["RANSAC_outlier_rejection_threshold"] = 2.5;
+    icp_nl_options["max_correspondence_distance"] = 0.01;
+    icp_nl_options["maximum_iterations"] = 1;
+    icp_nl_options["euclidean_fitness_epsilon"] = 0.001;
+    // icp_nl_options["RANSAC_outlier_rejection_threshold"] = 0.2;
     
     json results_icp_nl2 = pcc2.predict_all_with_icp_non_linear(icp_nl_options);
     // std::cout << std::setw(4) << results_icp_nl << std::endl;
 
     std::string out_json_icp_nl_path2 =
-        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1/test_results_sources_1_500_icp_nl.json";
+        "/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/test_results/test_results_sources_1_iter7/test_results_sources_1_500_icp_nl.json";
     std::ofstream out_json_icp_nl_stream2(out_json_icp_nl_path2);
     out_json_icp_nl_stream2 << std::setw(4) << results_icp_nl2 << std::endl;
 

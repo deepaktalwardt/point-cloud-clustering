@@ -250,14 +250,18 @@ json PointCloudClassifier::predict_with_icp(
     icp.setMaxCorrespondenceDistance(options["max_correspondence_distance"]);
     icp.setMaximumIterations(options["maximum_iterations"]);
     icp.setEuclideanFitnessEpsilon(options["euclidean_fitness_epsilon"]);
-    icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+    // icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+
+    Eigen::AngleAxisf init_rotation(0, Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f init_translation(0, 0, 0);
+    Eigen::Matrix4f init_guess = (init_translation * init_rotation).matrix();
 
     for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
     {
         icp.setInputSource(it->second);
 
         pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
-        icp.align(aligned_cloud_temp);
+        icp.align(aligned_cloud_temp, init_guess);
 
         json single_result;
         single_result["has_converged"] = icp.hasConverged();
@@ -289,14 +293,18 @@ json PointCloudClassifier::predict_with_icp_non_linear(
     icp.setMaxCorrespondenceDistance(options["max_correspondence_distance"]);
     icp.setMaximumIterations(options["maximum_iterations"]);
     icp.setEuclideanFitnessEpsilon(options["euclidean_fitness_epsilon"]);
-    icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+    // icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+
+    Eigen::AngleAxisf init_rotation(0, Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f init_translation(0, 0, 0);
+    Eigen::Matrix4f init_guess = (init_translation * init_rotation).matrix();
 
     for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
     {
         icp.setInputSource(it->second);
 
         pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
-        icp.align(aligned_cloud_temp);
+        icp.align(aligned_cloud_temp, init_guess);
 
         json single_result;
         single_result["has_converged"] = icp.hasConverged();
