@@ -33,6 +33,15 @@ for key in object_dictionary:
 
 print(object_points)
 
+for object in object_points.keys():
+    dataframe = pd.DataFrame.from_dict(object_points[object], orient='index')
+    print(dataframe)
+
+    ax = dataframe.plot.hist(bins=10, legend=False, title=object)
+    plt.show()
+    fig = ax.get_figure()
+    fig.savefig(object+'.png')
+
 
 
 
