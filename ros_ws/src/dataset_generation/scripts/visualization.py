@@ -23,7 +23,15 @@ for file in files:
                 object_dictionary[key] = [value]
             break
 
+print(object_dictionary)
 
+object_points = dict()
+
+for key in object_dictionary:
+    object_points[key] = Counter(object_dictionary[key])
+    object_points[key] = dict(object_points[key])
+
+print(object_points)
 
 
 
