@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 #This python file is to Visualize all points in same object files PCDs.
 #To run this file you have to download out_10_transformed folder from  link below
-# https://drive.google.com/drive/u/0/folders/1HUHbE3eXu16X205_lOgl0zlVci1-G36c
+# https://drive.google.com/drive/u/0/folders/1lnVNuEFTcJpKi0eY2Fex6Js69cw0nApt
 
 # getting files from directory and reading from files
 files = os.listdir('out_10_transformed')
