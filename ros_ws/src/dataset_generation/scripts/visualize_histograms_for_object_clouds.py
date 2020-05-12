@@ -3,6 +3,10 @@ import pandas as pd
 from collections import Counter
 import matplotlib.pyplot as plt
 
+#This python file is to Visualize all points in same object files PCDs.
+#To run this file you have to download out_10_transformed folder from  link below
+# https://drive.google.com/drive/u/0/folders/1HUHbE3eXu16X205_lOgl0zlVci1-G36c
+
 # getting files from directory and reading from files
 files = os.listdir('out_10_transformed')
 os.chdir('out_10_transformed')
@@ -14,18 +18,22 @@ object_dictionary = dict()
 for file in files:
     print(file)
 
-    file_text = open(file, 'r').readlines()
+    file_text = open(file, 'r').readlines() #opening file in read mode
     for line in file_text:
-        if 'POINTS' in line:
+		# serching for "POINTS" in each line in PCD
+        if 'POINTS' in line: 
             print(line.strip().split(' ')[1])
-            value = int(line.strip().split(' ')[1])
-            key = file.split('-')[0]
+			# getting points size and giving to value
+            value = int(line.strip().split(' ')[1]) 
+			# getting the object name from file name and giving to key value
+            key = file.split('-')[0] 
             # Adding key and value to object dictionary
             if key in object_dictionary:
                 object_dictionary[key].append(value)
             else:
                 object_dictionary[key] = [value]
             break
+			
 #printing each object with points in each Cloud file
 print(object_dictionary)
 
