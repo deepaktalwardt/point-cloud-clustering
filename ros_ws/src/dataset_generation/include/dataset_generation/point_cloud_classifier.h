@@ -138,7 +138,12 @@ json PointCloudClassifier::predict_all(
     // Initialize testing results
     json testing_results;
     testing_results["testing_method"] = testing_method;
-    int count_tested = 0;
+    testing_results["options"] = options;
+
+    int count_tested = 0, count_skipped = 0;
+
+    // Initialize PCP object
+    dataset_generation::PointCloudProcessing pcp;
 
     // Iterate over all testing files
     for (const std::string& fn : test_set_fn_)
@@ -158,6 +163,7 @@ json PointCloudClassifier::predict_all(
         if (true_class == "")
         {
             std::cout << "Skipped file " << fn << " because label not selected." << std::endl;
+            count_skipped++;
             continue;
         }
 
@@ -166,9 +172,12 @@ json PointCloudClassifier::predict_all(
         pcl::PCLPointCloud2 cloud_blob;
         pcl::io::loadPCDFile(test_pcd_file_path, cloud_blob);
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromPCLPointCloud2(cloud_blob, *test_cloud);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud_unfiltered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::fromPCLPointCloud2(cloud_blob, *test_cloud_unfiltered);
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr test_cloud = pcp.apply_ground_removal(test_cloud_unfiltered, 0.2, 2);
+
+        // Call the correct function depending on testing_method
         if (testing_method == "icp")
         {
             testing_results[fn] = predict_with_icp(test_cloud, true_class, options);
@@ -187,8 +196,9 @@ json PointCloudClassifier::predict_all(
             break; 
         }
         count_tested++;
+        std::cout << "Results found for [" << count_tested << "/" << test_set_fn_.size() << "]" << std::endl;
     }
-    std::cout << "Files tested: " << count_tested << std::endl;
+    std::cout << "Files tested: " << count_tested << ", Files skipped: " << count_skipped << std::endl;
 
     return testing_results;
 }
@@ -234,6 +244,7 @@ json PointCloudClassifier::predict_with_icp(
     json result;
     result["tests"] = {};
     result["true_label"] = true_class;
+    result["num_points"] = test_cloud->points.size();
 
     // Create ICP object
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
@@ -244,14 +255,18 @@ json PointCloudClassifier::predict_with_icp(
     icp.setMaxCorrespondenceDistance(options["max_correspondence_distance"]);
     icp.setMaximumIterations(options["maximum_iterations"]);
     icp.setEuclideanFitnessEpsilon(options["euclidean_fitness_epsilon"]);
-    icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+    // icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+
+    Eigen::AngleAxisf init_rotation(0, Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f init_translation(0, 0, 0);
+    Eigen::Matrix4f init_guess = (init_translation * init_rotation).matrix();
 
     for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
     {
         icp.setInputSource(it->second);
 
         pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
-        icp.align(aligned_cloud_temp);
+        icp.align(aligned_cloud_temp, init_guess);
 
         json single_result;
         single_result["has_converged"] = icp.hasConverged();
@@ -272,6 +287,7 @@ json PointCloudClassifier::predict_with_icp_non_linear(
     json result;
     result["tests"] = {};
     result["true_label"] = true_class;
+    result["num_points"] = test_cloud->points.size();
 
     // Create ICP object
     pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
@@ -282,14 +298,18 @@ json PointCloudClassifier::predict_with_icp_non_linear(
     icp.setMaxCorrespondenceDistance(options["max_correspondence_distance"]);
     icp.setMaximumIterations(options["maximum_iterations"]);
     icp.setEuclideanFitnessEpsilon(options["euclidean_fitness_epsilon"]);
-    icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+    // icp.setRANSACOutlierRejectionThreshold(options["RANSAC_outlier_rejection_threshold"]);
+
+    Eigen::AngleAxisf init_rotation(0, Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f init_translation(0, 0, 0);
+    Eigen::Matrix4f init_guess = (init_translation * init_rotation).matrix();
 
     for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
     {
         icp.setInputSource(it->second);
 
         pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
-        icp.align(aligned_cloud_temp);
+        icp.align(aligned_cloud_temp, init_guess);
 
         json single_result;
         single_result["has_converged"] = icp.hasConverged();
@@ -314,24 +334,34 @@ json PointCloudClassifier::predict_with_ndt(
     json result;
     result["tests"] = {};
     result["true_label"] = true_class;
+    result["num_points"] = test_cloud->points.size();
 
     // Create NDT object
     pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt;
 
     // Apply NDT Paramaters
-    ndt.setTransformationEpsilon (options["transformation_epsilon"]);
-    ndt.setStepSize(options["step_size"]);
     ndt.setInputTarget(test_cloud);
+    ndt.setTransformationEpsilon(options["transformation_epsilon"]);
+    ndt.setStepSize(options["step_size"]);
     ndt.setResolution(options["set_resolution"]);
     ndt.setMaximumIterations(options["maximum_iterations"]);
-    
+
+    Eigen::AngleAxisf init_rotation(0, Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f init_translation(0, 0, 0);
+    Eigen::Matrix4f init_guess = (init_translation * init_rotation).matrix();
 
     for (auto it = source_point_clouds_.begin(); it != source_point_clouds_.end(); it++)
-    {
+    {   
+        // std::cout << "Source cloud size: " << (it->second)->points.size() << std::endl;
+        // std::cout << "Test cloud size: " << test_cloud->points.size() << std::endl;
+
+        // Apply NDT Paramaters
         ndt.setInputSource(it->second);
 
-        pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;
-        ndt.align(aligned_cloud_temp);
+        pcl::PointCloud<pcl::PointXYZ> aligned_cloud_temp;        
+        ndt.align(aligned_cloud_temp, init_guess);
+
+        // std::cout << "true_class:" << true_class << std::endl;
 
         json single_result;
         single_result["has_converged"] = ndt.hasConverged();

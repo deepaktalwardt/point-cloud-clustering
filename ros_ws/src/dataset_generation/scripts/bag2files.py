@@ -9,12 +9,13 @@ from lgsvl_msgs.msg import Detection3DArray, Detection3D, BoundingBox3D
 from datetime import datetime
 
 import json
+import yaml
 
 class Bag2Files:
 
     """
     Make sure to run this before in a separate terminal
-    $ rosrun pcl_ros pointoud_to_pcd input:=/sync/lidar _prefix:="/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/bag3_2020-05-01-11-15-05.bag/pcd/" _binary:=false
+    $ rosrun pcl_ros pointcloud_to_pcd input:=/sync/lidar _prefix:="/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/pcd/" _binary:=false
     """
 
     def __init__(self, in_pcl_topic, in_detections_3d_topic, out_sync_lidar_topic, out_folder_path):
@@ -116,7 +117,9 @@ if __name__ == "__main__":
     out_sync_lidar_topic = '/sync/lidar'
     
     # To be used as the folder name
-    bag_name = 'bag5_2020-05-05-15-11-17.bag'
+    # bag_name = 'bag5_2020-05-05-15-11-17.bag'
+    # bag_name = 'bag6_2020-05-09-19-08-22.bag'
+    bag_name = 'testbag1_2020-05-09-19-39-52.bag'
     
     # Path where to save outputs from the bag
     out_folder_path = os.path.join('/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs', bag_name)
