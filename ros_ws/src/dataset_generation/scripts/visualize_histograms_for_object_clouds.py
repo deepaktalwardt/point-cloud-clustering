@@ -3,8 +3,10 @@ import pandas as pd
 from collections import Counter
 import matplotlib.pyplot as plt
 
-#This python file is to Visualize all points in same object files PCDs.
-#To run this file you have to download out_10_transformed folder from  link below
+# This python file is used to plot a histogram of the number of points in object PCD files.
+# This is useful to see the distribution of the number of points/PCD for different objects
+
+# To run this file you have to download out_10_transformed folder from  link below
 # https://drive.google.com/drive/u/0/folders/1lnVNuEFTcJpKi0eY2Fex6Js69cw0nApt
 
 # getting files from directory and reading from files
