@@ -85,5 +85,8 @@ Please be sure to install the following packages before running -
 python-pcl 0.3.0a1  
 Matplotlib 3.2.1
 
-### To Run Visualize_histogram_for_object_clouds.py
-Download out_10_transformed folder and add path.
+3. `knn_classifier.ipynb`: This python notebook implements the K-Nearest Neighbor Algorithm for classifying point clouds. To run this file you will need to download the dataset of PCD files from Google Drive.
+
+Please be sure to install the following packages before running -
+python-pcl 0.3.0a1  
+Matplotlib 3.2.1
