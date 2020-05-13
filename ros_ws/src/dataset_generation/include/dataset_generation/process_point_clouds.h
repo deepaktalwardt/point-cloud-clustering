@@ -29,6 +29,13 @@ using namespace std::literals::chrono_literals;
 namespace dataset_generation
 {
 
+/**
+ * This class provides all the functions needed in the project for pre-processing,
+ * filtering and cleaning up point clouds. This is a utility class so the constructor does 
+ * not take any input arguments. 
+ * 
+ * Most functions have a visualization and saving counterpart as well. 
+*/
 class PointCloudProcessing
 {
 public:
