@@ -26,6 +26,11 @@ void visualize_pcd_and_objects(
     epco.visualize_objects_in_pcd(in_cloud_blob, dets3d_json);
 }
 
+/**
+ * This node is used for creation of the dataset. It takes in the raw PCD files and uses the ExtractPointCloudsObjects
+ * class to extract and save Point Cloud objects
+*/
+
 int main(int argc, char** argv)
 {
     /**
