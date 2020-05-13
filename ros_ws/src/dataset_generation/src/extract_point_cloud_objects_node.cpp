@@ -32,16 +32,6 @@ int main(int argc, char** argv)
      * Extract objects into individual PCDs. 
     */
 
-    // std::string in_folder_pcd =
-    //     "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/pcd";
-    
-    // std::string in_folder_dets3d =
-    //     "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/detections_3d";
-
-    // std::string out_folder_pcd =
-    //     "/home/parshwa/Desktop/CMPE_255 Project/bag5_2020-05-05-15-11-17.bag-20200506T192755Z-001/bag5_2020-05-05-15-11-17.bag/out_100_transformed";
-
-    // std::string bag_name = "bag6_2020-05-09-19-08-22.bag";
     std::string bag_name = "testbag1_2020-05-09-19-39-52.bag";
 
     std::string in_folder_pcd =
