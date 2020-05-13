@@ -11,13 +11,23 @@ from datetime import datetime
 import json
 import yaml
 
-class Bag2Files:
-
-    """
+"""
     Make sure to run this before in a separate terminal
     $ rosrun pcl_ros pointcloud_to_pcd input:=/sync/lidar _prefix:="/home/deepak/Dropbox/SJSU/Semesters/Spring2020/CMPE 255/Project/raw_msgs/testbag1_2020-05-09-19-39-52.bag/pcd/" _binary:=false
-    """
+"""
 
+class Bag2Files:
+    """
+    This class is used for extracting raw point clouds and 3D detections into individual files. It first
+    synchronizes the incoming streaming data over `in_pcl_topic` and `in_detections_3d_topic` and then
+    saves them.
+
+    This class will directly save the detections to `out_folder_path`. However, instead of directly saving
+    point clouds to PCD files, it instead republishes ONLY the synchronized clouds to `out_sync_lidar_topic`.
+
+    The `pcl_ros pointcloud_to_pcd` node running elsewhere is responsible for saving those point clouds to
+    PCD files
+    """
     def __init__(self, in_pcl_topic, in_detections_3d_topic, out_sync_lidar_topic, out_folder_path):
         """
         Constructor for the Bag2Files class

@@ -9,6 +9,12 @@
 
 using json = dataset_generation::json;
 
+/**
+ * This class implements testing of the point cloud matching based classification algorithms.
+ * 
+ * Please change the paths to paths on your computer to run.
+*/
+
 int main(int argc, char** argv)
 {
     std::string in_folder_sources = 

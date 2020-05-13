@@ -33,6 +33,18 @@ namespace dataset_generation
 
 using json = nlohmann::json;
 
+/**
+ * This class implements the extraction of point cloud objects from raw
+ * point clouds that are obtained from the LGSVL simulator. It takes as 
+ * inputs:
+ * 
+ * 1. Path to a folder with all the PCD files
+ * 2. Path to a folder with all detection JSON files
+ * 3. Output path where object point clouds will be saved as PCDs
+ * 
+ * Take a look at the `extract_point_cloud_objects_node` to see how this
+ * class can be used.
+*/
 class ExtractPointCloudObjects
 {
 

@@ -21,6 +21,15 @@ using json = nlohmann::json;
 namespace dataset_generation
 {
 
+/**
+ * This class implements all the functions needed for the classification process using 
+ * ICP, ICP-NL and NDT algorithms. It takes as input:
+ * 
+ * 1. A path to folder where all the source point clouds are located. These are the model clouds
+ *    that the other clouds need to be matched to for classification.
+ * 2. A path to folder where the test PCD files are placed.
+ * 3. A vector that lists the classes that we are predicting for.
+*/
 class PointCloudClassifier
 {
 public:
