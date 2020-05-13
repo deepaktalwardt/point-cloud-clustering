@@ -36,7 +36,7 @@ Please see the `ExtractPointCloudObjects` class that is available in `ros_ws/src
 ### Create model PCDs
 To create models from extracted object clouds, you need to concatenate them.
 1. Go to `ros_ws/src/dataset_generation/src/visualize_objects.cpp` and modify the input and output paths.
-2. Select the object class for which you would like to create the model for. Choose to visualize or visulize and save.
+2. Select the object class for which you would like to create the model for. Choose to visualize or visualize and save.
 3. Then, run
 ```
 $ catkin_make && source devel/setup.bash && rosrun dataset_generation visualize_objects
